@@ -2,7 +2,7 @@
 
 :root {
   --background: #F8F8F8;
-  --extra-large: 23px;
+  --extra-large: 20px;
   --large: 18px;
   --medium: 16px;
   --content: 14px;
@@ -10,12 +10,19 @@
   --primary: #822BE2;
 }
 
-.font-large {
+.font-extra-large {
   font-size: var(--extra-large);
+}
+.font-content {
+  font-size: var(--content);
+}
+.font-medium {
+  font-size: var(--medium);
 }
 .btn-color{
   background-color: var(--primary);
 }
+
 
 body {
   background: var(--background);
