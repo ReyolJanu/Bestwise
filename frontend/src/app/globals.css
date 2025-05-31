@@ -2,26 +2,23 @@
 
 :root {
   --background: #F8F8F8;
-  --foreground: #171717;
+  --extra-large: 23px;
+  --large: 18px;
+  --medium: 16px;
+  --content: 14px;
+  --font-sans: var(--font-poppins);
+  --primary: #822BE2;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.font-large {
+  font-size: var(--extra-large);
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #F8F8F8;
-    --large:[230px];
-    
-  }
+.btn-color{
+  background-color: var(--primary);
 }
 
 body {
   background: var(--background);
+  font-family: var(--font-sans), sans-serif;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
