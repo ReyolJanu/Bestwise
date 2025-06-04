@@ -13,6 +13,9 @@
 .font-extra-large {
   font-size: var(--extra-large);
 }
+.font-large {
+  font-size: var(--large);
+}
 .font-content {
   font-size: var(--content);
 }
