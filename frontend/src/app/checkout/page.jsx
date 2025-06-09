@@ -101,7 +101,7 @@ function page() {
                             <p className="text-[16px] font-semibold text-[#333333]">US $27.50</p>
                         </div>
                         <div className='px-5 mt-5'>
-                            <button className="h-[50px] w-full rounded-[5px] bg-[#822BE2] hover:bg-purple-600 hover:cursor-pointer text-white font-bold transition">
+                            <button className="h-[50px] w-full rounded-[5px] bg-[#822BE2] hover:bg-purple-200 hover:border-2 hover:border-[#822BE2] hover:text-[#822BE2] hover:cursor-pointer text-white font-bold">
                                 Checkout US $37.50
                             </button>
                         </div>
@@ -134,7 +134,7 @@ function page() {
                         </div>
 
                         <div className='flex w-full  pl-5 pr-5 items-center justify-center'>
-                            <button className='w-full flex justify-center items-center btn-color h-[50px] rounded-[5px] text-white'>Save Changes</button>
+                            <button className='w-full flex justify-center items-center bg-[#822BE2] font-semibold h-[50px] rounded-[5px] text-white  hover:bg-purple-200 hover:border-2 hover:border-[#822BE2] hover:text-[#822BE2] hover:cursor-pointer'>Save Changes</button>
                         </div>
                         <h2 className="text-xl font-semibold text-gray-800 mb-4 mt-4">Payment Information</h2>
                         <p className='px-5 py-[2px]'>Shipping fee will be add based on your buying product and product will be delivered with in 7 daysReturnable with <a href='#'>Terms & Conditions</a></p>
