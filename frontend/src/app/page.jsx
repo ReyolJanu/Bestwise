@@ -14,6 +14,8 @@ import Navbar from './components/navBar/page'
 import { useDispatch, useSelector } from 'react-redux';
 import { setAllProducts } from './slices/productSlice';
 import {getProducts} from './actions/productAction'
+import Link from 'next/link';
+
 
 
 
@@ -107,6 +109,7 @@ export default function FancyCarousel() {
         <div className=' flex justify-between  items-center text-font-medium'><span className='flex justify-center items-center gap-[10px]'> <FaFire className='text-red-500' />Hot Sales</span><span className='flex justify-center items-center gap-[10px]'> Explore more <IoIosArrowForward /></span></div>
         <div className='flex  items-center gap-[15px] '>
 
+
           {/* carts */}
           <div className="w-[173px] h-[261px] rounded-lg ">
             <div className="relative">
@@ -182,33 +185,45 @@ export default function FancyCarousel() {
 
 
       {/* all Products */}
-      <div className='flex flex-wrap mt-[50px]'>
-        <div className="w-[173px] h-[261px] rounded-lg ">
-          <div className="relative">
-            <Image
-              src="/mug.jpg"
-              alt="Birthday Mug"
-              width={172}
-              height={172}
-              className="rounded-lg object-cover"
-            />
-            <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
-              <Flame className="text-red-500 w-4 h-4" />
-            </div>
-            <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1">
-              <Heart className="text-purple-500 w-4 h-4" />
-            </div>
+     <div className="flex flex-wrap gap-4 mt-[50px]">
+  {allProducts && allProducts.length > 0 ? (
+    allProducts.slice(0, 9).map((product) => (
+      <Link
+        key={product._id}
+        href={`/productDetail/${product._id}`}
+        className="w-[173px] h-[261px] rounded-lg block"
+      >
+        <div className="relative">
+          <Image
+            src="/mug.jpg" // Replace with product.
+            alt={product.title}
+            width={172}
+            height={172}
+            className="rounded-lg object-cover"
+          />
+          <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
+            <Flame className="text-red-500 w-4 h-4" />
           </div>
-
-          <div className="mt-2 px-1">
-            <h3 className="font-medium ">Birthday Mug</h3>
-            <p className="font-medium  text-gray-700">US $25.75</p>
-            <div className="flex mt-1">
-              <span>☆☆☆☆☆</span>
-            </div>
+          <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1">
+            <Heart className="text-purple-500 w-4 h-4" />
           </div>
         </div>
-      </div>
+
+        <div className="mt-2 px-1">
+          <h3 className="font-medium truncate">{product.title}</h3>
+          <p className="font-medium text-gray-700">
+            US ${product.price}
+          </p>
+          <div className="flex mt-1">
+            <span>☆☆☆☆☆</span>
+          </div>
+        </div>
+      </Link>
+    ))
+  ) : (
+    <p className="text-red-500">Server currently busy!</p>
+  )}
+</div>
 
       {/* services Divs */}
       <div className="flex justify-between mt-[50px]">

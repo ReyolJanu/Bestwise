@@ -70,7 +70,7 @@ exports.getProduct = async (req, res) =>{
 // Get all products
 exports.getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find(); // Fetch all products from the DB
+    const products = await Product.find().limit(10); // Fetch all products from the DB
 
     if (products.length === 0) {
       return res.status(404).json({ message: 'No products found' });

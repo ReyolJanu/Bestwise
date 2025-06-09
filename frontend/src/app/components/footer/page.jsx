@@ -34,7 +34,7 @@ function Footer() {
             <div className='flex gap-[15px] items-center text-[#5C5C5C] text-[18px] pl-[20px]'><span><MdOutlineLocalPhone /></span><p>0703892890</p></div>
         </div>
     </div>
-    <div className='bg-gray-200 flex w-full justify-center items-center pt-[20px] pb-[20px] gap-[10px]'><FaRegCopyright /> all copy rights received 2025</div>
+    <div className='bg-gray-200   text-[#822BE2] font-semibold flex w-full justify-center items-center pt-[20px] pb-[20px] gap-[10px]'><FaRegCopyright /> all copy rights received 2025</div>
     </div>
   )
 }
