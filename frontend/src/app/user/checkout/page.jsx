@@ -1,12 +1,12 @@
 "use client";
 import React from 'react'
-import Navbar from '../components/navBar/page'
+import Navbar from '../../components/navBar/page'
 import Image from 'next/image';
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { AiOutlineEdit } from "react-icons/ai";
 import { FaCcVisa, FaCcPaypal } from "react-icons/fa";
 import { SiMastercard } from "react-icons/si";
-import Footer from '../components/footer/page'
+import Footer from '../../components/footer/page'
 
 function page() {
     return (

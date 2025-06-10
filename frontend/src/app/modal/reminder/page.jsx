@@ -39,7 +39,7 @@ const ReminderGift = ({ onClose, children }) => {
                     <option value="none" className='flex justify-center items-center w-full'>December</option>
                   </select>
                 </div>
-                <div className='w-[5px] rounded-full h-[30px] bg-[#818181]' />
+                <div className='w-[5px] rounded-full h-[30px] bg-[#D9D9D9]' />
                 <div className='border-2 border-[#D9D9D9] w-[30%] flex justify-center items-center pl-[10px] pr-[10px] h-[50px] rounded-[5px]'>
                   <input type='number' className='w-full bg-transparent outline-none placeholder:text-gray-600' placeholder='Date' />
                 </div>

@@ -32,6 +32,14 @@ function Navbar() {
     router.push('/surprisegift');
   };
 
+  const HistoryHandler = () => {
+    router.push('/user/history');
+  };
+
+  const cartsHandler = () => {
+    router.push('/user/checkout');
+  };
+
 
   const [showModal, setShowModal] = useState(false);
     const closeModal = () => setShowModal(false);
@@ -64,7 +72,7 @@ function Navbar() {
 
         {/* Navigation Items */}
         <ul className='flex items-center gap-[30px] text-[18px] relative'>
-          <li>Services</li>
+          <li className='hover:text-[#822BE2] cursor-pointer'>Services</li>
 
           {/* Gift Combo Dropdown (Always Available) */}
 
@@ -74,7 +82,7 @@ function Navbar() {
           >
             <li className='relative'>
               <div className='flex items-center gap-2'>
-                <span>Gift Combo</span>
+                <span  className='hover:text-[#822BE2] cursor-pointer'>Gift Combo</span>
                 <svg
                   className={`w-4 h-4 transition-transform ${dropdownOpenTwo ? 'rotate-180' : ''}`}
                   fill='none'
@@ -97,8 +105,8 @@ function Navbar() {
             </li>
           </div>
 
-          <li>About Us</li>
-          <li><MdOutlineShoppingCart /></li>
+          <li  className='hover:text-[#822BE2] cursor-pointer'>About Us</li>
+          <li onClick={cartsHandler}  className='hover:text-[#822BE2] cursor-pointer'><MdOutlineShoppingCart /></li>
 
           {/* Profile/Login Dropdown */}
           <li className='relative cursor-pointer'>
@@ -132,7 +140,7 @@ function Navbar() {
                   Profile
                 </li>
                 <li className='hover:bg-gray-100 px-3 py-2 rounded cursor-pointer'>Wishlists</li>
-                <li className='hover:bg-gray-100 px-3 py-2 rounded cursor-pointer'>History</li>
+                <li className='hover:bg-gray-100 px-3 py-2 rounded cursor-pointer' onClick={HistoryHandler}>History</li>
                 <li
                   className='hover:bg-gray-100 px-3 py-2 rounded cursor-pointer text-red-500'
                   onClick={logoutHandler}
