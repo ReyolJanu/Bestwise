@@ -18,7 +18,7 @@ const SurpriseGift = ({ onClose, children }) => {
         <div className='flex-col border-1 border-[#D9D9D9] p-[20px] rounded-[10px] space-y-[15px]'>
           <div className='flex justify-between items-center text-[16px]'>
             <p className='text-[18px] font-semibold '>Checkout</p>
-             {/* <IoIosCloseCircleOutline  className='text-[30px]'/> */}
+            {/* <IoIosCloseCircleOutline  className='text-[30px]'/> */}
           </div>
           <div className='flex justify-between items-center text-[16px]'>
             <p className='text-[#5C5C5C]'>Total items</p>
@@ -46,9 +46,9 @@ const SurpriseGift = ({ onClose, children }) => {
             <p className='font-semibold'>I read & understood</p>
           </div>
           <div className='w-full flex gap-[8px]'>
-             <button onClick={onClose} className='h-[50px] w-[30%] text-[18px] border-2 border-[#822BE2] text-[#822BE2] font-semibold rounded-[8px] hover:cursor-pointer bg-white hover:bg-purple-200 mt-[20px]'>Cancel</button>
-             <button className='h-[50px] w-[70%] text-[18px] text-white font-semibold rounded-[8px] hover:cursor-pointer bg-[#822BE2] hover:bg-purple-600 mt-[20px]'>Confirm Order</button>
-          </div>             
+            <button onClick={onClose} className='h-[50px] w-[30%] text-[18px] border-2 border-[#822BE2] text-[#822BE2] font-semibold rounded-[8px] hover:cursor-pointer bg-white hover:bg-purple-200 mt-[20px]'>Cancel</button>
+            <button className='h-[50px] w-[70%] text-[18px] text-white font-semibold rounded-[8px] hover:cursor-pointer bg-[#822BE2] hover:bg-purple-600 mt-[20px]'>Confirm Order</button>
+          </div>
         </div>
       </div>
     </div>
