@@ -1,66 +1,68 @@
-"use client";
+"use client"
 
-import React, { useEffect } from 'react';
-import Slider from 'react-slick';
-import Image from 'next/image';
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
-import { FaFire } from "react-icons/fa6";
-import { IoIosArrowForward } from "react-icons/io";
-import { Heart, Flame } from 'lucide-react';
-import { FaRegClock } from "react-icons/fa";
-import Footer from './components/footer/page'
-import Navbar from './components/navBar/page'
-import { useDispatch, useSelector } from 'react-redux';
-import { setAllProducts } from './slices/productSlice';
-import {getProducts} from './actions/productAction'
-import Link from 'next/link';
+import { useEffect } from "react"
+import Slider from "react-slick"
+import Image from "next/image"
+import "slick-carousel/slick/slick.css"
+import "slick-carousel/slick/slick-theme.css"
+import { FaFire } from "react-icons/fa6"
+import { Heart, Flame, ChevronRight } from "lucide-react"
+import { FaRegClock } from "react-icons/fa"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import Footer from "./components/footer/page"
+import Navbar from "./components/navBar/page"
+import { useDispatch, useSelector } from "react-redux"
+import { getProducts } from "./actions/productAction"
+import Link from "next/link"
 
-
-
-
-const images = [
-  '/1.jpg',
-  '/2.jpg',
-  '/3.jpg',
-];
+const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
 export default function FancyCarousel() {
+  const { allProducts } = useSelector((state) => state.productsState)
+  const dispatch = useDispatch()
 
-  const { allProducts } = useSelector((state) => state.productsState);
-  const dispatch = useDispatch();
-
-  useEffect(()=>{
-    dispatch(getProducts());
+  useEffect(() => {
+    dispatch(getProducts())
     console.log(allProducts)
-  },[dispatch])
+  }, [dispatch])
 
   const cards = [
     {
-      icon: '✏️', // replace with your actual icon component or image
-      title: 'Customizable Gift',
+      icon: "✏️",
+      title: "Customizable Gift",
       description:
-        'Design gifts your way — choose packaging, add notes, select colors or themes. Every gift becomes a reflection of your style and emotion.',
+        "Design gifts your way — choose packaging, add notes, select colors or themes. Every gift becomes a reflection of your style and emotion.",
     },
     {
-      icon: '⏰',
-      title: 'Reminder Gift Notify',
+      icon: "⏰",
+      title: "Reminder Gift Notify",
       description:
-        'Design gifts your way — choose packaging, add notes, select colors or themes. Every gift becomes a reflection of your style and emotion.',
+        "Never miss special moments. Set reminders for birthdays, anniversaries, and holidays to ensure your loved ones feel remembered.",
     },
     {
-      icon: '👨‍👩‍👦',
-      title: 'Collaborative Gift',
+      icon: "👨‍👩‍👦",
+      title: "Collaborative Gift",
       description:
-        'Invite your friends and family to join in on a special gift. Split the cost, share the joy, and create memorable surprises — together.',
+        "Invite your friends and family to join in on a special gift. Split the cost, share the joy, and create memorable surprises — together.",
     },
     {
-      icon: '🎁',
-      title: 'Surprise Gift Delivery',
+      icon: "🎁",
+      title: "Surprise Gift Delivery",
       description:
-        'Schedule a surprise delivery for your loved ones at just the right moment. We’ll handle the magic while you enjoy the reactions.',
+        "Schedule a surprise delivery for your loved ones at just the right moment. We'll handle the magic while you enjoy the reactions.",
     },
-  ];
+  ]
+
+  const categories = [
+    { name: "Electronics", image: "/placeholder.svg?height=80&width=80" },
+    { name: "Fashion", image: "/placeholder.svg?height=80&width=80" },
+    { name: "Home & Garden", image: "/placeholder.svg?height=80&width=80" },
+    { name: "Sports", image: "/placeholder.svg?height=80&width=80" },
+    { name: "Books", image: "/placeholder.svg?height=80&width=80" },
+    { name: "Toys", image: "/placeholder.svg?height=80&width=80" },
+    { name: "Beauty", image: "/placeholder.svg?height=80&width=80" },
+  ]
 
   const settings = {
     dots: true,
@@ -71,289 +73,320 @@ export default function FancyCarousel() {
     autoplay: true,
     autoplaySpeed: 3000,
     arrows: true,
-  };
+    responsive: [
+      {
+        breakpoint: 768,
+        settings: {
+          arrows: false,
+        },
+      },
+    ],
+  }
 
   return (
-    <div className='w-full pr-[80px] pl-[80px] flex-col items-center justify-center'>
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="w-full h-[500px] relative">
-        <Slider {...settings}>
-          {images.map((src, index) => (
-            <div key={index} className="relative w-full h-[500px]">
-              <Image
-                src={src}
-                alt={`Slide ${index}`}
-                fill
-                className="object-cover rounded-lg"
-                priority={index === 0}
-              />
+
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12">
+        {/* Hero Carousel */}
+        <div className="w-full h-[300px] sm:h-[400px] lg:h-[500px] relative rounded-xl overflow-hidden shadow-lg">
+          <Slider {...settings}>
+            {images.map((src, index) => (
+              <div key={index} className="relative w-full h-[300px] sm:h-[400px] lg:h-[500px]">
+                <Image
+                  src={src || "/placeholder.svg"}
+                  alt={`Slide ${index}`}
+                  fill
+                  className="object-cover"
+                  priority={index === 0}
+                />
+              </div>
+            ))}
+          </Slider>
+        </div>
+
+        {/* Categories Section */}
+        <section className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Categories</h2>
+            <Button variant="ghost" className="text-purple-600 hover:text-purple-700">
+              Explore more <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
+            {categories.map((category, index) => (
+              <div key={index} className="flex flex-col items-center space-y-2 group cursor-pointer">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
+                  <Image
+                    src={category.image || "/placeholder.svg"}
+                    alt={category.name}
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+                  {category.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Hot Sales Section */}
+        <section className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 flex items-center gap-2">
+              <FaFire className="text-red-500" />
+              Hot Sales
+            </h2>
+            <Button variant="ghost" className="text-purple-600 hover:text-purple-700">
+              Explore more <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((item) => (
+              <Card key={item} className="group hover:shadow-lg transition-shadow">
+                <CardContent className="p-0">
+                  <div className="relative">
+                    <Image
+                      src="/mug.jpg"
+                      alt="Birthday Mug"
+                      width={200}
+                      height={200}
+                      className="w-full aspect-square object-cover rounded-t-lg"
+                    />
+                    <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
+                      <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
+                    </div>
+                    <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors">
+                      <Heart className="text-purple-500 w-3 h-3 sm:w-4 sm:h-4" />
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-medium text-sm sm:text-base truncate">Birthday Mug</h3>
+                    <p className="font-semibold text-purple-600 text-sm sm:text-base">US $25.75</p>
+                    <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
+                      <span>★★★★★</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Upcoming Events */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-2">
+            <FaRegClock className="text-purple-600" />
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Upcoming Events</h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="overflow-hidden group hover:shadow-lg transition-shadow">
+              <CardContent className="p-0">
+                <div className="relative h-48 sm:h-56">
+                  <Image src="/motherday.jpg" alt="Mother's day" fill className="object-cover" />
+                  <div className="absolute bottom-0 right-0 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-tl-2xl">
+                    <span className="font-medium text-gray-900">Mother's Day</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* All Products */}
+        <section className="space-y-6">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">All Products</h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {allProducts && allProducts.length > 0 ? (
+              allProducts.slice(0, 12).map((product) => (
+                <Link key={product._id} href={`/productDetail/${product._id}`} className="block">
+                  <Card className="group hover:shadow-lg transition-shadow">
+                    <CardContent className="p-0">
+                      <div className="relative">
+                        <Image
+                          src="/mug.jpg"
+                          alt={product.title}
+                          width={200}
+                          height={200}
+                          className="w-full aspect-square object-cover rounded-t-lg"
+                        />
+                        <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
+                          <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
+                        </div>
+                        <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors">
+                          <Heart className="text-purple-500 w-3 h-3 sm:w-4 sm:h-4" />
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <h3 className="font-medium text-sm sm:text-base truncate">{product.title}</h3>
+                        <p className="font-semibold text-purple-600 text-sm sm:text-base">US ${product.price}</p>
+                        <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
+                          <span>★★★★★</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-red-500 text-lg">Server currently busy!</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Services Cards */}
+        <section className="space-y-6">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Our Services</h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {cards.map((card, index) => (
+              <Card key={index} className="border-2 border-purple-200 hover:border-purple-400 transition-colors">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-3 bg-purple-600 text-white p-3 rounded-full">
+                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl">
+                      {card.icon}
+                    </div>
+                    <h3 className="font-semibold text-sm sm:text-base">{card.title}</h3>
+                  </div>
+                  <p className="text-gray-600 text-sm leading-relaxed">{card.description}</p>
+                  <Button variant="outline" className="w-full border-purple-600 text-purple-600 hover:bg-purple-50">
+                    Explore
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Trending Services */}
+        <section className="space-y-6">
+          <Card className="border-2 border-purple-200 overflow-hidden">
+            <CardContent className="p-0">
+              <div className="bg-purple-600 text-white p-4 flex items-center gap-3">
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl">💖</div>
+                <h2 className="text-xl font-semibold">Trending Services</h2>
+              </div>
+
+              <div className="p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="relative h-48 rounded-lg overflow-hidden">
+                        <Image src="/decoration4.jpg" alt="decoration" fill className="object-cover" />
+                      </div>
+                      <div className="relative h-48 rounded-lg overflow-hidden">
+                        <Image src="/decoration1.jpg" alt="decoration" fill className="object-cover" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="relative h-48 rounded-lg overflow-hidden">
+                        <Image src="/decoration2.jpg" alt="decoration" fill className="object-cover" />
+                      </div>
+                      <div className="relative h-48 rounded-lg overflow-hidden">
+                        <Image src="/decoration3.jpg" alt="decoration" fill className="object-cover" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <p className="text-gray-600 leading-relaxed">
+                      There are many variations of passages of Lorem Ipsum available, but the majority have suffered
+                      alteration in some form, by injected humour, or randomised words which don't look even slightly
+                      believable.
+                    </p>
+
+                    <div className="flex gap-4">
+                      <div className="w-2 bg-purple-600 rounded-full"></div>
+                      <div className="space-y-2">
+                        <div className="font-medium">All Decoration Items</div>
+                        <div className="text-gray-600">Party Table</div>
+                        <div className="text-gray-600">Other Elegant Items</div>
+                      </div>
+                    </div>
+
+                    <Button className="w-full bg-purple-600 hover:bg-purple-700">Explore</Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* About Us */}
+        <section className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div className="relative h-64 sm:h-80 rounded-lg overflow-hidden">
+              <Image src="/map.jpg" alt="Our location" fill className="object-cover" />
             </div>
-          ))}
-        </Slider>
+
+            <div className="space-y-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">About Us</h2>
+              <p className="text-gray-600 leading-relaxed">
+                There are many variations of passages of Lorem Ipsum available, but the majority have suffered
+                alteration in some form, by injected humour, or randomised words which don't look even slightly
+                believable. If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything
+                embarrassing hidden in the middle of text.
+              </p>
+
+              <div className="grid grid-cols-2 gap-8">
+                <div className="flex gap-3">
+                  <div className="w-2 bg-purple-600 rounded-full"></div>
+                  <div>
+                    <div className="text-3xl font-bold text-purple-600">2500+</div>
+                    <div className="text-gray-600">Active users</div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-2 bg-purple-600 rounded-full"></div>
+                  <div>
+                    <div className="text-3xl font-bold text-purple-600">10000+</div>
+                    <div className="text-gray-600">Products</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
-
-      <div className=' mt-[50px] space-y-[15px]'>
-        <div className=' flex justify-between  items-center text-font-medium'><span>Categories</span><span className='flex justify-center items-center gap-[10px]'> Explore more <IoIosArrowForward /></span></div>
-        <div className='flex justify-center items-center gap-[15px]'>
-          <div className='flex-col justify-center items-center '><div className='flex justify-center items-center rounded-[100px] border-1 w-[100px] h-[100px] border-[#818181]'>Image</div><span className='flex justify-center items-center'>Categories</span></div>
-          <div className='flex-col justify-center items-center '><div className='flex justify-center items-center rounded-[100px] border-1 w-[100px] h-[100px] border-[#818181]'>Image</div><span className='flex justify-center items-center'>Categories</span></div>
-          <div className='flex-col justify-center items-center '><div className='flex justify-center items-center rounded-[100px] border-1 w-[100px] h-[100px] border-[#818181]'>Image</div><span className='flex justify-center items-center'>Categories</span></div>
-          <div className='flex-col justify-center items-center '><div className='flex justify-center items-center rounded-[100px] border-1 w-[100px] h-[100px] border-[#818181]'>Image</div><span className='flex justify-center items-center'>Categories</span></div>
-          <div className='flex-col justify-center items-center '><div className='flex justify-center items-center rounded-[100px] border-1 w-[100px] h-[100px] border-[#818181]'>Image</div><span className='flex justify-center items-center'>Categories</span></div>
-          <div className='flex-col justify-center items-center '><div className='flex justify-center items-center rounded-[100px] border-1 w-[100px] h-[100px] border-[#818181]'>Image</div><span className='flex justify-center items-center'>Categories</span></div>
-          <div className='flex-col justify-center items-center '><div className='flex justify-center items-center rounded-[100px] border-1 w-[100px] h-[100px] border-[#818181]'>Image</div><span className='flex justify-center items-center'>Categories</span></div>
-        </div>
-      </div>
-
-      <div className=' mt-[50px] space-y-[15px]'>
-        <div className=' flex justify-between  items-center text-font-medium'><span className='flex justify-center items-center gap-[10px]'> <FaFire className='text-red-500' />Hot Sales</span><span className='flex justify-center items-center gap-[10px]'> Explore more <IoIosArrowForward /></span></div>
-        <div className='flex  items-center gap-[15px] '>
-
-
-          {/* carts */}
-          <div className="w-[173px] h-[261px] rounded-lg ">
-            <div className="relative">
-              <Image
-                src="/mug.jpg"
-                alt="Birthday Mug"
-                width={172}
-                height={172}
-                className="rounded-lg object-cover"
-              />
-              <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
-                <Flame className="text-red-500 w-4 h-4" />
-              </div>
-              <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1">
-                <Heart className="text-purple-500 w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="mt-2 px-1">
-              <h3 className="font-medium ">Birthday Mug</h3>
-              <p className="font-medium  text-gray-700">US $25.75</p>
-              <div className="flex mt-1">
-                <span>☆☆☆☆☆</span>
-              </div>
-            </div>
-          </div>
-          <div className="w-[173px] h-[261px] rounded-lg ">
-            <div className="relative">
-              <Image
-                src="/mug.jpg"
-                alt="Birthday Mug"
-                width={172}
-                height={172}
-                className="rounded-lg object-cover"
-              />
-              <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
-                <Flame className="text-red-500 w-4 h-4" />
-              </div>
-              <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1">
-                <Heart className="text-purple-500 w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="mt-2 px-1">
-              <h3 className="font-medium ">Birthday Mug</h3>
-              <p className="font-medium  text-gray-700">US $25.75</p>
-              <div className="flex mt-1">
-                <span>☆☆☆☆☆</span>
-              </div>
-            </div>
-          </div>
-          {/* carts */}
-        </div>
-      </div>
-
-
-      <div className='flex-col  mt-[20px]'>
-        <div className='flex items-center gap-[10px] pb-[15px] text-font-medium'><FaRegClock />Upcoming Events</div>
-        <div className="w-[250px] h-[250px]  rounded-lg overflow-hidden  bg-white relative">
-          <div className="relative w-full h-[250px]">
-            <Image
-              src="/motherday.jpg"
-              alt="Mother's day"
-              fill
-              className="object-cover"
-            />
-          </div>
-          <div className="flex w-[75%] items-center justify-center bg-white absolute bottom-0 right-0  rounded-tl-full rounded-bl-full  py-2 shadow">
-            <span className="text-base font-medium">Mother’s day</span>
-          </div>
-        </div>
-      </div>
-
-
-      {/* all Products */}
-     <div className="flex flex-wrap gap-4 mt-[50px]">
-  {allProducts && allProducts.length > 0 ? (
-    allProducts.slice(0, 9).map((product) => (
-      <Link
-        key={product._id}
-        href={`/productDetail/${product._id}`}
-        className="w-[173px] h-[261px] rounded-lg block"
-      >
-        <div className="relative">
-          <Image
-            src="/mug.jpg" // Replace with product.
-            alt={product.title}
-            width={172}
-            height={172}
-            className="rounded-lg object-cover"
-          />
-          <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
-            <Flame className="text-red-500 w-4 h-4" />
-          </div>
-          <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1">
-            <Heart className="text-purple-500 w-4 h-4" />
-          </div>
-        </div>
-
-        <div className="mt-2 px-1">
-          <h3 className="font-medium truncate">{product.title}</h3>
-          <p className="font-medium text-gray-700">
-            US ${product.price}
-          </p>
-          <div className="flex mt-1">
-            <span>☆☆☆☆☆</span>
-          </div>
-        </div>
-      </Link>
-    ))
-  ) : (
-    <p className="text-red-500">Server currently busy!</p>
-  )}
-</div>
-
-      {/* services Divs */}
-      <div className="flex justify-between mt-[50px]">
-        {cards.map((card, index) => (
-          <div
-            key={index}
-            className="w-[300px] h-[250px] justify-between  border-2 border-[#822BE2] rounded-lg p-4 flex flex-col items-center text-center "
-          >
-            <div className="flex items-center gap-2 mb-2 bg-[#822BE2] w-full h-[50px] pl-[5px] rounded-full">
-              <div className=" w-[42px] h-[42px] flex items-center justify-center border-1 border-[#822BE2] text-white rounded-full bg-white">
-                {card.icon}
-              </div>
-              <div className="font-semibold text-white flex justify-center items-center">{card.title}</div>
-            </div>
-            <p className="text-sm text-gray-700 mb-4">{card.description}</p>
-            <button className="font-semibold w-full h-[40px] px-4 py-1 border-2 border-[#822BE2] text-[#822BE2] rounded hover:bg-purple-100 transition">
-              Explore
-            </button>
-          </div>
-        ))}
-      </div>
-
-
-      {/* Services */}
-      <div className='w-full flex-col items-center border-2 border-[#822BE2] rounded-[12px] p-[10px] mt-[20px]'>
-        <div className='flex bg-[#822BE2] items-center h-[50px] rounded-full'>
-          <div className='bg-white w-[40px] h-[40px] rounded-full flex justify-center items-center ml-[5px]'>💖</div><div className='flex justify-center items-center text-white pl-[40%]'>Rending Services</div>
-        </div>
-        <div className='flex w-full mt-[15px]'>
-          <div className='w-[60%] space-y-[15px]'>
-            <div className='flex gap-[15px]'>
-              <div className='bg-orange-300 w-[60%] h-[200px] rounded-[10px] flex justify-center items-center relative overflow-hidden'> <Image src="/decoration4.jpg" alt="decoration" fill style={{ objectFit: 'cover' }} /></div>
-              <div className='bg-orange-700 w-[40%] h-[200px] rounded-[10px] flex justify-center items-center  relative overflow-hidden'><Image src="/decoration1.jpg" alt="decoration" fill style={{ objectFit: 'cover' }} /></div>
-            </div>
-            <div className='flex gap-[15px]'>
-              <div className='bg-orange-300 w-[300px] h-[200px] rounded-[10px] flex justify-center items-center relative overflow-hidden'><Image src="/decoration2.jpg" alt="decoration" fill style={{ objectFit: 'cover' }} /></div>
-              <div className='bg-orange-700 w-[500px] h-[200px] rounded-[10px] flex justify-center items-center relative overflow-hidden'><Image src="/decoration3.jpg" alt="decoration" fill style={{ objectFit: 'cover' }} /></div>
-            </div>
-          </div>
-          <div className='w-[40%] flex-col p-[20px] space-y-[20px]'>
-            <div><span className='flex'>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable. </span></div>
-            <div className='flex items-center gap-[10px]'>
-              <div className='w-[8px] h-[120px] bg-[#822BE2] rounded-full'></div>
-              <div className='flex-col items-center h-full space-y-[10px]'>
-                <div>All Decoration Items</div>
-                <div>Party Table</div>
-                <div>Other Elegent Items</div>
-              </div>
-            </div>
-            <div><button className='border-2 border-[#822BE2] rounded-[5px] h-[40px] w-[100%] text-[#822BE2] font-semibold'>Explore</button></div>
-          </div>
-        </div>
-      </div>
-
-
-      {/* AboutUs */}
-      <div className='flex w-full mt-[50px]'>
-        <div className='w-[50%] h-[300px] rounded-[10px] flex justify-center items-center relative overflow-hidden'> <Image src="/map.jpg" alt="decoration" fill style={{ objectFit: 'cover' }} /></div>
-        <div className='w-[50%] flex-col p-[20px] pl-[50px] space-y-[15px]'>
-          <p className='text-[20px] font-semibold'>About Us</p>
-          <p className='text-[16px]'>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable. If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing hidden in the middle of text.</p>
-          <div className='flex '>
-            <div className='flex w-full'>
-
-              <div className='w-[8px] h-[80px] bg-[#822BE2] rounded-full' />
-              <div className='flex-col justify-center items-center  pl-[10px]'>
-                <p className='font-bold text-[30px] text-[#822BE2]'>2500+</p>
-                <p className='text-[14px]'>Active users</p>
-              </div>
-
-              <div className='w-[8px] h-[80px] bg-[#822BE2] rounded-full ml-[100px]' />
-              <div className='flex-col justify-center items-center  pl-[10px]'>
-                <p className='font-bold text-[30px] text-[#822BE2]'>10000+</p>
-                <p className='text-[14px]'>Products</p>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-      {/* footer */}
 
       <Footer />
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      {/* Custom styles */}
+      {/* Custom Carousel Styles */}
       <style jsx global>{`
-        /* Make dots purple */
         .slick-dots li button:before {
           font-size: 12px;
-          color: #822BE2;
+          color: #9333ea;
           opacity: 0.5;
         }
 
         .slick-dots li.slick-active button:before {
-          color: #822BE2;
+          color: #9333ea;
           opacity: 1;
         }
 
-        /* Make arrows purple */
         .slick-prev:before,
         .slick-next:before {
-          color: #822BE2;
-          font-size: 30px;
+          color: #9333ea;
+          font-size: 24px;
+        }
+
+        @media (max-width: 768px) {
+          .slick-prev:before,
+          .slick-next:before {
+            font-size: 20px;
+          }
         }
       `}</style>
     </div>
-  );
+  )
 }
