@@ -58,7 +58,7 @@ const getNavigationData = (role) => {
             {
               title: "Overview ",
               icon: Home,
-              href: "/admin/dashboard/Overview",
+              href: "/admin",
              },
             // {
             //   title: "Product Profit Analysis",
@@ -79,28 +79,28 @@ const getNavigationData = (role) => {
             {
               title: "View Users List",
               icon: Users,
-              href: "/admin/users/list",
+              href: "/usermanage",
             },
-            {
-              title: "Edit/Delete Users",
-              icon: Edit,
-              href: "/admin/users/manage",
-            },
-            {
-              title: "User Activity",
-              icon: Activity,
-              href: "/admin/users/activity",
-            },
-            {
-              title: "Manage User Status",
-              icon: UserCheck,
-              href: "/admin/users/status",
-            },
-            {
-              title: "Search Users",
-              icon: Search,
-              href: "/admin/users/search",
-            },
+          //   {
+          //     title: "Edit/Delete Users",
+          //     icon: Edit,
+          //     href: "/admin/users/manage",
+          //   },
+          //   {
+          //     title: "User Activity",
+          //     icon: Activity,
+          //     href: "/admin/users/activity",
+          //   },
+          //   {
+          //     title: "Manage User Status",
+          //     icon: UserCheck,
+          //     href: "/admin/users/status",
+          //   },
+          //   {
+          //     title: "Search Users",
+          //     icon: Search,
+          //     href: "/admin/users/search",
+          //   },
           ],
         },
         {
@@ -108,40 +108,40 @@ const getNavigationData = (role) => {
           icon: Package,
           items: [
             {
-              title: "Product List",
+              title: "Product",
               icon: FileText,
-              href: "/admin/products/list",
+              href: "/prodectmanage",
             },
-            {
-              title: "Add New Product",
-              icon: Plus,
-              href: "/admin/products/add",
-            },
-            {
-              title: "Edit Existing Products",
-              icon: Edit,
-              href: "/admin/products/edit",
-            },
-            {
-              title: "Manage Categories",
-              icon: FileText,
-              href: "/admin/products/categories",
-            },
-            {
-              title: "Inventory Management",
-              icon: FileText,
-              href: "/admin/products/inventory",
-            },
-            {
-              title: "Out of Stock",
-              icon: Archive,
-              href: "/admin/products/stock",
-            },
-            {
-              title: "Profit/Loss Calculation",
-              icon: Calculator,
-              href: "/admin/products/profit",
-            },
+            // {
+            //   title: "Add New Product",
+            //   icon: Plus,
+            //   href: "/admin/products/add",
+            // },
+            // {
+            //   title: "Edit Existing Products",
+            //   icon: Edit,
+            //   href: "/admin/products/edit",
+            // },
+            // {
+            //   title: "Manage Categories",
+            //   icon: FileText,
+            //   href: "/admin/products/categories",
+            // },
+            // {
+            //   title: "Inventory Management",
+            //   icon: FileText,
+            //   href: "/admin/products/inventory",
+            // },
+            // {
+            //   title: "Out of Stock",
+            //   icon: Archive,
+            //   href: "/admin/products/stock",
+            // },
+            // {
+            //   title: "Profit/Loss Calculation",
+            //   icon: Calculator,
+            //   href: "/admin/products/profit",
+            // },
           ],
         },
         {
