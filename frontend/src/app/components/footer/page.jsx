@@ -1,42 +1,117 @@
-import React from 'react'
-import Image from 'next/image'
-import logo from '../../../../public/logo.png'
-import { FaInstagram } from "react-icons/fa";
-import { FaFacebookF } from "react-icons/fa";
-import { FaWhatsapp } from "react-icons/fa";
-import { IoLocationOutline } from "react-icons/io5";
-import { MdOutlineLocalPhone } from "react-icons/md";
-import { TfiEmail } from "react-icons/tfi";
-import { FaRegCopyright } from "react-icons/fa6";
+import Link from "next/link"
 
-function Footer() {
+export default function Footer() {
   return (
-    <div>
-        <div className='flex w-full bg-gray-200 mt-[50px] pl-[50px] pr-[50px] pb-[20px] pt-[50px]'>
-        <div className='w-[25%] '> <div className='w-[300px] relative'><Image src={logo} alt='Logo' /></div></div>
-        <div className='w-[25%] flex-col space-y-[10px]'>
-            <p className='font-semibold text-[18px]'>Social media</p>
-            <div className='flex gap-[15px] items-center text-[#5C5C5C] text-[18px] pl-[20px]'><span><FaInstagram /></span><p>Instagram</p></div>
-            <div className='flex gap-[15px] items-center text-[#5C5C5C] text-[18px] pl-[20px]'><span><FaFacebookF /></span><p>Facebook</p></div>
-            <div className='flex gap-[15px] items-center text-[#5C5C5C] text-[18px] pl-[20px]'><span><FaWhatsapp /></span><p>Whatsapp</p></div>
+    <footer className="bg-gray-50 border-t">
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <h3 className="font-bold text-lg mb-4">Best Wishes</h3>
+            <p className="text-gray-600 text-sm">
+              Your one-stop shop for all celebration needs. We provide high-quality products to make your special
+              moments memorable.
+            </p>
+          </div>
+
+          <div>
+            <h4 className="font-semibold mb-4">Shop</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/balloons" className="text-gray-600 hover:text-gray-900 text-sm">
+                  Balloons
+                </Link>
+              </li>
+              <li>
+                <Link href="/cards" className="text-gray-600 hover:text-gray-900 text-sm">
+                  Cards
+                </Link>
+              </li>
+              <li>
+                <Link href="/home-living" className="text-gray-600 hover:text-gray-900 text-sm">
+                  Home & Living
+                </Link>
+              </li>
+              <li>
+                <Link href="/kitchen-dining" className="text-gray-600 hover:text-gray-900 text-sm">
+                  Kitchen & Dining
+                </Link>
+              </li>
+              <li>
+                <Link href="/toys-novelties" className="text-gray-600 hover:text-gray-900 text-sm">
+                  Toys & Novelties
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold mb-4">Company</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/about" className="text-gray-600 hover:text-gray-900 text-sm">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-gray-600 hover:text-gray-900 text-sm">
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link href="/careers" className="text-gray-600 hover:text-gray-900 text-sm">
+                  Careers
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-gray-600 hover:text-gray-900 text-sm">
+                  Blog
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold mb-4">Customer Service</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/help" className="text-gray-600 hover:text-gray-900 text-sm">
+                  Help Center
+                </Link>
+              </li>
+              <li>
+                <Link href="/shipping" className="text-gray-600 hover:text-gray-900 text-sm">
+                  Shipping Information
+                </Link>
+              </li>
+              <li>
+                <Link href="/returns" className="text-gray-600 hover:text-gray-900 text-sm">
+                  Returns & Exchanges
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="text-gray-600 hover:text-gray-900 text-sm">
+                  FAQ
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
-        <div className='w-[25%] flex-col space-y-[10px]'>
-            <p className='font-semibold text-[18px]'>Quick Links</p>
-            <div className='flex gap-[15px] items-center text-[#5C5C5C] text-[18px] pl-[20px]'><p>Collabrative Gifts</p></div>
-            <div className='flex gap-[15px] items-center text-[#5C5C5C] text-[18px] pl-[20px]'><p>Custermizable gift</p></div>
-            <div className='flex gap-[15px] items-center text-[#5C5C5C] text-[18px] pl-[20px]'><p>Surprice Gift</p></div>
-            <div className='flex gap-[15px] items-center text-[#5C5C5C] text-[18px] pl-[20px]'><p>Contact Us</p></div>
+
+        <div className="border-t mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+          <p className="text-sm text-gray-600">© 2025 Best Wishes. All rights reserved.</p>
+          <div className="flex space-x-6 mt-4 md:mt-0">
+            <Link href="/terms" className="text-sm text-gray-600 hover:text-gray-900">
+              Terms
+            </Link>
+            <Link href="/privacy" className="text-sm text-gray-600 hover:text-gray-900">
+              Privacy
+            </Link>
+            <Link href="/cookies" className="text-sm text-gray-600 hover:text-gray-900">
+              Cookies
+            </Link>
+          </div>
         </div>
-        <div className='w-[25%]  flex-col space-y-[10px]'>
-            <p className='font-semibold text-[18px]'>Social media</p>
-            <div className='flex gap-[15px] items-center text-[#5C5C5C] text-[18px] pl-[20px]'><span><IoLocationOutline /></span><p>Location</p></div>
-            <div className='flex gap-[15px] items-center text-[#5C5C5C] text-[18px] pl-[20px]'><span><TfiEmail /></span><p>email@gamilcom</p></div>
-            <div className='flex gap-[15px] items-center text-[#5C5C5C] text-[18px] pl-[20px]'><span><MdOutlineLocalPhone /></span><p>0703892890</p></div>
-        </div>
-    </div>
-    <div className='bg-gray-200   text-[#822BE2] font-semibold flex w-full justify-center items-center pt-[20px] pb-[20px] gap-[10px]'><FaRegCopyright /> all copy rights received 2025</div>
-    </div>
+      </div>
+    </footer>
   )
 }
-
-export default Footer
