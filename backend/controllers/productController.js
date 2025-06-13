@@ -1,54 +1,69 @@
 // controllers/productController.js
 const Product = require("../models/Product");
 
+
+
+// addProduct.js - admin only
 exports.addProduct = async (req, res) => {
   try {
     const {
       title,
       description,
-      category,
+      mainCategory,
+      facets,
       price,
       imageUrls,
       stock,
+      rating,
       isAvailable,
       rentType,
-      eventType
     } = req.body;
 
-    if (!title || !description || !category || !price || !imageUrls) {
+    if (
+      !title ||
+      !description ||
+      !mainCategory ||
+      !price ||
+      !imageUrls ||
+      !Array.isArray(imageUrls) ||
+      imageUrls.length === 0
+    ) {
       return res.status(400).json({
         success: false,
-        message: 'Please fill all required fields',
+        message: "Please fill all required fields",
       });
     }
 
     const product = await Product.create({
       title,
       description,
-      category,
+      mainCategory,
+      facets,
       price,
       imageUrls,
       stock,
+      rating,
       isAvailable,
       rentType,
-      eventType,
-      owner: req.user._id // auto-assign from logged-in user
+      owner: req.user._id, // ensure req.user is set from middleware
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: 'Product created successfully',
-      product
+      message: "Product created successfully",
+      product,
     });
-
   } catch (error) {
-    res.status(500).json({
+    console.error("Add Product Error:", error);
+    return res.status(500).json({
       success: false,
-      message: 'Server error while creating product',
+      message: "Server error while creating product",
       error: error.message,
     });
   }
 };
+
+
 
 // get single Product
 exports.getProduct = async (req, res) =>{

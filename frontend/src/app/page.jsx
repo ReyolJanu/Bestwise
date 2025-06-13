@@ -64,6 +64,7 @@ export default function FancyCarousel() {
     { name: "Beauty", image: "/placeholder.svg?height=80&width=80" },
   ]
 
+
   const settings = {
     dots: true,
     infinite: true,
@@ -201,15 +202,15 @@ export default function FancyCarousel() {
         </section>
 
         {/* All Products */}
-        <section className="space-y-6">
+        <section className="space-y-6 ">
           <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">All Products</h2>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 ">
             {allProducts && allProducts.length > 0 ? (
               allProducts.slice(0, 12).map((product) => (
                 <Link key={product._id} href={`/productDetail/${product._id}`} className="block">
-                  <Card className="group hover:shadow-lg transition-shadow">
-                    <CardContent className="p-0">
+                 
+                    <CardContent className="p-0 border-1 border-[#D9D9D9] rounded-[10px]">
                       <div className="relative">
                         <Image
                           src="/mug.jpg"
@@ -229,11 +230,16 @@ export default function FancyCarousel() {
                         <h3 className="font-medium text-sm sm:text-base truncate">{product.title}</h3>
                         <p className="font-semibold text-purple-600 text-sm sm:text-base">US ${product.price}</p>
                         <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
-                          <span>★★★★★</span>
+                          <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <span key={i}>{i < Math.floor(product.rating) ? '★' : '☆'}</span>
+                            ))}
+                          </div>
+
                         </div>
                       </div>
                     </CardContent>
-                  </Card>
+                
                 </Link>
               ))
             ) : (

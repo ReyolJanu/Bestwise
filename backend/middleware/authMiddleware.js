@@ -1,5 +1,6 @@
 
 
+
 // middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
@@ -21,13 +22,17 @@ exports.isAuthenticated = async (req, res, next) => {
 };
 
 
+// Middleware to restrict access based on roles
 exports.authorizeRoles = (...roles) => {
-   return (req, res, next) => {
-      if(!roles.includes(req.user.role)){
-         return next(new ErrorHandler(`Role ${req.user.role} is not Allowed for this opparations!`, 401));
-      }
-      next();
-   }
-}
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        message: `Role '${req.user.role}' is not allowed to access this resource`,
+      });
+    }
+    next();
+  };
+};
+
 
 
