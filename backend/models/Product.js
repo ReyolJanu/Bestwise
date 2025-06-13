@@ -125,7 +125,6 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Optional for rental
     rentType: {
       type: String,
       enum: ["none", "daily", "weekly", "monthly"],

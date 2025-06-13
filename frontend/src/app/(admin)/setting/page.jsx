@@ -1,5 +1,7 @@
+"use client";
 import { SidebarInset, SidebarTrigger } from "../../../components/ui/sidebar"
 import { Separator } from "../../../components/ui/separator"
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,6 +19,9 @@ import { Switch } from "../../../components/ui/switch"
 import { User, Lock, Bell, Shield } from "lucide-react"
 
 export default function SettingsPage() {
+
+  const { user } = useSelector((state) => state.userState);
+
   return (
     <SidebarInset>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -47,7 +52,7 @@ export default function SettingsPage() {
             <TabsList>
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="security">Security</TabsTrigger>
-              <TabsTrigger value="notifications">Notifications</TabsTrigger>
+              {/* <TabsTrigger value="notifications">Notifications</TabsTrigger> */}
               <TabsTrigger value="system">System</TabsTrigger>
             </TabsList>
 
@@ -64,20 +69,20 @@ export default function SettingsPage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="firstName">First Name</Label>
-                      <Input id="firstName" defaultValue="Admin" />
+                      <Input id="firstName" defaultValue="Admin" value={user.firstName} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lastName">Last Name</Label>
-                      <Input id="lastName" defaultValue="User" />
+                      <Input id="lastName" defaultValue="User" value={user.lastName}  />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" defaultValue="admin@company.com" />
+                    <Input id="email" type="email" defaultValue="admin@company.com" value={user.email} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" type="tel" defaultValue="+1 (555) 123-4567" />
+                    <Input id="phone" type="text" defaultValue="+1 (555) 123-4567" value={user.phone}  />
                   </div>
                   <Button>Save Changes</Button>
                 </CardContent>
@@ -96,7 +101,7 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="currentPassword">Current Password</Label>
-                    <Input id="currentPassword" type="password" />
+                    <Input id="currentPassword" type="password"   value={user.password}/>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="newPassword">New Password</Label>
@@ -110,7 +115,7 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Shield className="h-5 w-5" />
@@ -130,7 +135,7 @@ export default function SettingsPage() {
                   </div>
                   <Button variant="outline">Configure 2FA</Button>
                 </CardContent>
-              </Card>
+              </Card> */}
             </TabsContent>
 
             <TabsContent value="notifications" className="space-y-4">

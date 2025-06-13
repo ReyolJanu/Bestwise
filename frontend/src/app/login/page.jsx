@@ -8,7 +8,6 @@ import { userLogin } from '../../app/slices/userSlice';
 import logo from '../../assets/logo.png';
 import { useRouter } from 'next/navigation';
 
-
 function Page() {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -21,20 +20,38 @@ function Page() {
     e.preventDefault();
     setErrorMsg('');
     setLoading(true);
+
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/login`, { email, password });
-      console.log('Login success:', response.data);
-      dispatch(userLogin(response.data));  // save user to redux
-      console.log('User role:', response.data.user.role);
-      router.push('/') 
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
+        email,
+        password
+      });
+
+      const userData = res.data.user;
+
+      dispatch(userLogin({
+        user: userData,
+        role: userData.role,
+      }));
+
+      console.log('User role:', userData.role);
+
+      // Role-based redirection
+      if (userData.role === 'admin') {
+        router.push('/admin');
+      } else if (userData.role === 'inventoryManager') {
+        router.push('/inventory/dashboard');
+      } else if (userData.role === 'deliveryStaff') {
+        router.push('/delivery/dashboard');
+      } else {
+        router.push('/');
+      }
+
     } catch (error) {
       console.error('Login error:', error);
-      if (error.response?.data?.message) {
-        setErrorMsg(error.response.data.message);
-      } else {
-        setErrorMsg('Login failed. Please try again.');
-      }
+      setErrorMsg(error.response?.data?.message || 'Login failed. Please try again.');
     }
+
     setLoading(false);
   };
 
@@ -57,7 +74,7 @@ function Page() {
                 placeholder='Enter your email'
                 required
                 value={email}
-                onChange={(e)=>{setEmail(e.target.value)}}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
@@ -69,7 +86,7 @@ function Page() {
                 placeholder='Enter your password'
                 required
                 value={password}
-                onChange={(e)=>{setPassword(e.target.value)}}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
@@ -83,8 +100,8 @@ function Page() {
               Forgot Password?
             </span>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className='w-full h-[50px] rounded-[8px] btn-color text-white font-medium disabled:opacity-50'
             >
@@ -92,7 +109,7 @@ function Page() {
             </button>
 
             <div className='w-full flex justify-center items-center font-content'>
-              <span>Don’t have an account? <span className='underline decoration-solid text-blue-500 cursor-pointer'>Sign up</span></span>
+              <span>Don’t have an account? <span className='underline text-blue-500 cursor-pointer'>Sign up</span></span>
             </div>
           </div>
         </div>
