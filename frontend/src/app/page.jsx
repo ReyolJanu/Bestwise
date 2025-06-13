@@ -211,37 +211,47 @@ export default function FancyCarousel() {
             {allProducts && allProducts.length > 0 ? (
               allProducts.slice(0, 12).map((product) => (
                 <Link key={product._id} href={`/productDetail/${product._id}`} className="block">
-                 
-                    <CardContent className="p-0 border-1 border-[#D9D9D9] rounded-[10px]">
-                      <div className="relative">
-                        <Image
-                          src="/mug.jpg"
-                          alt={product.title}
-                          width={200}
-                          height={200}
-                          className="w-full aspect-square object-cover rounded-t-lg"
-                        />
-                        <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
-                          <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
-                        </div>
-                        <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors">
-                          <Heart className="text-purple-500 w-3 h-3 sm:w-4 sm:h-4" />
-                        </div>
-                      </div>
-                      <div className="p-3">
-                        <h3 className="font-medium text-sm sm:text-base truncate">{product.title}</h3>
-                        <p className="font-semibold text-purple-600 text-sm sm:text-base">US ${product.price}</p>
-                        <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
-                          <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
-                            {Array.from({ length: 5 }, (_, i) => (
-                              <span key={i}>{i < Math.floor(product.rating) ? '★' : '☆'}</span>
-                            ))}
-                          </div>
 
-                        </div>
+                  <CardContent className="p-0 border-1 border-[#D9D9D9] rounded-[10px]">
+                    <div className="relative">
+                      <Image
+                        src="/mug.jpg"
+                        alt={product.title}
+                        width={200}
+                        height={200}
+                        className="w-full aspect-square object-cover rounded-t-lg"
+                      />
+                      <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
+                        <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
                       </div>
-                    </CardContent>
-                
+                      <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors">
+                        <Heart className="text-purple-500 w-3 h-3 sm:w-4 sm:h-4" />
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <h3 className="font-medium text-sm sm:text-base truncate">{product.title}</h3>
+                      <p className="font-semibold text-purple-600 text-sm sm:text-base">US ${product.price}</p>
+                      <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
+                        <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
+                          {Array.from({ length: 5 }, (_, i) => {
+                            const fullStars = Math.floor(product.rating || 0);
+                            const hasHalfStar = (product.rating || 0) - fullStars >= 0.5;
+
+                            if (i < fullStars) {
+                              return <AiFillStar key={i} />;
+                            } else if (i === fullStars && hasHalfStar) {
+                              return <AiTwotoneStar key={i} />;
+                            } else {
+                              return <AiOutlineStar key={i} />;
+                            }
+                          })}
+                        </div>
+
+
+                      </div>
+                    </div>
+                  </CardContent>
+
                 </Link>
               ))
             ) : (
