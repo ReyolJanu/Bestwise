@@ -40,8 +40,8 @@ export default function CustomizeGifts() {
          </div>
 
           {/* Customization Options */}
-          <div className="w-[45%] border rounded-xl p-5 shadow-md bg-white">
-            <h3 className="font-bold text-lg mb-4">Customization options</h3>
+          <div className="w-[45%] border rounded-xl p-5 shadow-md bg-white ">
+            <h3 className="font-bold text-lg  mt-4 mb-4">Customization options</h3>
             <form className="flex flex-col gap-4">
               <div>
                 <label className="text-sm">Name</label>
