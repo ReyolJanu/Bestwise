@@ -15,6 +15,8 @@ import Navbar from "./components/navBar/page"
 import { useDispatch, useSelector } from "react-redux"
 import { getProducts } from "./actions/productAction"
 import Link from "next/link"
+import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
+
 
 const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
