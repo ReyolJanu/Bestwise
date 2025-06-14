@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import Slider from "react-slick"
 import Image from "next/image"
 import "slick-carousel/slick/slick.css"
@@ -16,18 +16,21 @@ import { useDispatch, useSelector } from "react-redux"
 import { getProducts } from "./actions/productAction"
 import Link from "next/link"
 import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
-
+import Loader from "./components/loader/page"
 
 const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
 export default function FancyCarousel() {
   const { allProducts } = useSelector((state) => state.productsState)
   const dispatch = useDispatch()
+    
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     dispatch(getProducts())
     console.log(allProducts)
   }, [dispatch])
+
 
   const cards = [
     {
@@ -204,6 +207,7 @@ export default function FancyCarousel() {
         </section>
 
         {/* All Products */}
+     
         <section className="space-y-6 ">
           <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">All Products</h2>
 

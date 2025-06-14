@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useLoading } from '../../hooks/useLoading'
+import Loader from '../../components/loader/page'
 import { DashboardOverview } from "./dashboard-overview"
 import { OrdersList } from "./orders-list"
 import { OrderDetails } from "./order-details"
@@ -215,30 +217,95 @@ export const mockOrders = [
   },
 ]
 
-export default function OrderManagementDashboard() {
-  const [selectedOrderId, setSelectedOrderId] = useState(null)
-  const [orders, setOrders] = useState(mockOrders)
+export default function OrderManagement() {
+  const { loading, withLoading } = useLoading();
+  const [orders, setOrders] = useState([]);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
-  const handleOrderUpdate = (orderId, updates) => {
-    setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, ...updates } : order)))
-  }
+  useEffect(() => {
+    const fetchOrders = async () => {
+      await withLoading(async () => {
+        try {
+          // Replace with actual API call
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`);
+          const data = await response.json();
+          setOrders(data);
+        } catch (error) {
+          console.error('Error fetching orders:', error);
+          // Fallback to mock data if API fails
+          setOrders(mockOrders);
+        }
+      });
+    };
 
-  const handleBulkUpdate = (orderIds, updates) => {
-    setOrders((prev) => prev.map((order) => (orderIds.includes(order.id) ? { ...order, ...updates } : order)))
-  }
+    fetchOrders();
+  }, [withLoading]);
 
-  const handleOrderDelete = (orderIds) => {
-    setOrders((prev) => prev.filter((order) => !orderIds.includes(order.id)))
-  }
+  const handleOrderUpdate = async (orderId, updates) => {
+    await withLoading(async () => {
+      try {
+        // Replace with actual API call
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        });
+        
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order.id === orderId ? { ...order, ...updates } : order
+          )
+        );
+      } catch (error) {
+        console.error('Error updating order:', error);
+      }
+    });
+  };
+
+  const handleBulkUpdate = async (orderIds, updates) => {
+    await withLoading(async () => {
+      try {
+        // Replace with actual API call
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/bulk-update`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderIds, updates }),
+        });
+        
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            orderIds.includes(order.id) ? { ...order, ...updates } : order
+          )
+        );
+      } catch (error) {
+        console.error('Error bulk updating orders:', error);
+      }
+    });
+  };
+
+  const handleOrderDelete = async (orderIds) => {
+    await withLoading(async () => {
+      try {
+        // Replace with actual API call
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/bulk-delete`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderIds }),
+        });
+        
+        setOrders(prevOrders => 
+          prevOrders.filter(order => !orderIds.includes(order.id))
+        );
+      } catch (error) {
+        console.error('Error deleting orders:', error);
+      }
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Order Management Dashboard</h1>
-          <p className="text-muted-foreground">Manage and track all your orders from one place</p>
-        </div>
-
+    <>
+      {loading && <Loader />}
+      <div className="space-y-6">
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview">Dashboard Overview</TabsTrigger>
@@ -272,6 +339,6 @@ export default function OrderManagementDashboard() {
           />
         )}
       </div>
-    </div>
-  )
+    </>
+  );
 }
