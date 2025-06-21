@@ -89,14 +89,14 @@ export default function CheckoutPage() {
                                             <div className='flex items-center space-x-[15px]'>
                                                 <p>Quantity</p>
                                                 <button
-                                                    className='w-8 h-8 flex justify-center rounded-[5px] bg-[#5C5C5C] text-white text-xl font-bold hover:bg-purple-200 hover:text-[#822BE2] hover:border-2 hover:border-[#822BE2] '
+                                                    className='w-8 h-8 flex justify-center rounded-[5px] bg-gray-300 text-white text-xl font-bold hover:bg-purple-200 hover:text-[#822BE2] hover:border-2 hover:border-[#822BE2] '
                                                     onClick={() => handleDecrease(item.productId)}
                                                 >
                                                     -
                                                 </button>
                                                 <span className='bg-white border-2 border-[#D9D9D9] w-[45px] h-[45px] rounded-[5px] flex justify-center items-center font-large'>{item.quantity}</span>
                                                 <button
-                                                    className='w-8 h-8 flex justify-center rounded-[5px] bg-[#5C5C5C] text-white text-xl font-bold hover:bg-purple-200 hover:text-[#822BE2] hover:border-2 hover:border-[#822BE2]'
+                                                    className='w-8 h-8 flex justify-center rounded-[5px] bg-gray-300 text-white text-xl font-bold hover:bg-purple-200 hover:text-[#822BE2] hover:border-2 hover:border-[#822BE2]'
                                                     onClick={() => handleIncrease(item.productId)}
                                                 >
                                                     +
@@ -133,7 +133,7 @@ export default function CheckoutPage() {
                                         </div>
                                     </div>
 
-                                    <div className='w-full p-5 flex-col border-2 border-[#D9D9D9] rounded-[10px] mt-[20px]'>
+                                    <div className='w-full p-5 flex-col border-2 border-[#D9D9D9] rounded-[10px] mt-[20px] mb-[50px]'>
                                         <h2 className="text-xl font-semibold text-gray-800 mb-4">Payer Information</h2>
                                         <div className='flex justify-between w-full '>
                                             <div className='flex-col w-50% '>
