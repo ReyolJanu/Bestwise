@@ -223,7 +223,7 @@ export default function FancyCarousel() {
                     <div className="relative">
                       <Image
                         src="/mug.jpg"
-                        alt={product.title}
+                        alt={product.name}
                         width={200}
                         height={200}
                         className="w-full aspect-square object-cover rounded-t-lg"
@@ -243,7 +243,7 @@ export default function FancyCarousel() {
                       </div>
                     </div>
                     <div className="p-3">
-                      <h3 className="font-medium text-sm sm:text-base truncate">{product.title}</h3>
+                      <h3 className="font-medium text-sm sm:text-base truncate">{product.name}</h3>
                       <p className="font-semibold text-purple-600 text-sm sm:text-base">US ${product.price}</p>
                       <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
                         <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
