@@ -99,7 +99,7 @@ function Navbar() {
           <div className="flex items-center justify-between h-[80px]">
             {/* Logo */}
             <div className="flex items-center">
-              <Image src={logo} alt="Logo" width={130} className="h-auto" />
+              <Image  onClick={() => handleNavigation('/')}  src={logo} alt="Logo" width={130} className="h-auto" />
             </div>
 
             {/* Desktop Search + Menu */}
@@ -146,7 +146,7 @@ function Navbar() {
 
               {/* Links */}
               <ul className="flex items-center gap-8 text-sm font-medium text-gray-700">
-                <li className="cursor-pointer hover:text-[#822BE2] transition-colors">Services</li>
+                <li onClick={() => handleNavigation('/services')} className="cursor-pointer hover:text-[#822BE2] transition-colors">Services</li>
 
                 {/* Gift Combo */}
                 <li className="relative cursor-pointer" onClick={() => setGiftDropdownOpen(!giftDropdownOpen)}>
@@ -270,7 +270,7 @@ function Navbar() {
           <div className="absolute w-full md:hidden bg-white border-t border-gray-200 shadow-lg">
             <div className="px-4 py-4 space-y-4 text-sm">
               <div className="space-y-3">
-                <div className="cursor-pointer hover:text-[#822BE2] transition-colors py-2">Services</div>
+                <div onClick={() => handleNavigation('/services')} className="cursor-pointer hover:text-[#822BE2] transition-colors py-2">Services</div>
 
                 {/* Gift Combo */}
                 <div className="cursor-pointer" onClick={() => setGiftDropdownOpen(!giftDropdownOpen)}>

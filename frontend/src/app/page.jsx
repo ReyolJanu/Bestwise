@@ -64,13 +64,14 @@ export default function FancyCarousel() {
   ]
 
   const categories = [
-    { name: "Electronics", image: "/placeholder.svg?height=80&width=80" },
-    { name: "Fashion", image: "/placeholder.svg?height=80&width=80" },
-    { name: "Home & Garden", image: "/placeholder.svg?height=80&width=80" },
-    { name: "Sports", image: "/placeholder.svg?height=80&width=80" },
-    { name: "Books", image: "/placeholder.svg?height=80&width=80" },
-    { name: "Toys", image: "/placeholder.svg?height=80&width=80" },
-    { name: "Beauty", image: "/placeholder.svg?height=80&width=80" },
+    { name: "Balloons", image: "/balloon.svg?height=80&width=80" },
+    { name: "Mugs", image: "/mug.svg?height=80&width=80" },
+    { name: "Birthday Cards", image: "/birthday-invitation.svg?height=80&width=80" },
+    { name: "Home & Living", image: "/home.svg?height=80&width=80" },
+      // { name: "Sports", image: "/placeholder.svg?height=80&width=80" },
+      // { name: "Books", image: "/placeholder.svg?height=80&width=80" },
+      // { name: "Toys", image: "/placeholder.svg?height=80&width=80" },
+      // { name: "Beauty", image: "/placeholder.svg?height=80&width=80" },
   ]
 
 
