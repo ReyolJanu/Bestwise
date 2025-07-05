@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
 import { Button } from "../../../../components/ui/button"
@@ -14,8 +14,8 @@ import { Eye, ArrowLeft, Check, AlertCircle } from "lucide-react"
 import MediaUpload from "./MediaUpload";
 import PricingSection from "./PricingSection"
 import InventorySection from "./InventorySection"
-import VariantsSection from "./VariantsSection"
 import CategoryFilters from "./CategoryFilters"
+import { Modal, useConfirmModal } from "../../../../components/ui/modal"
 
 // Dynamically import components that use browser-only APIs
 const RichTextEditor = dynamic(
@@ -54,6 +54,11 @@ export default function ProductForm({ product = null }) {
   const [formData, setFormData] = useState(defaultProduct)
   const [isClient, setIsClient] = useState(false)
   const [previewErrors, setPreviewErrors] = useState([])
+  const [editingField, setEditingField] = useState(null)
+  const [editValue, setEditValue] = useState("")
+  const [currentTab, setCurrentTab] = useState("basic") // Track current tab
+  const tabRef = useRef("basic") // Persist tab state across re-renders
+  const { isOpen, config, showError, showSuccess, closeModal } = useConfirmModal()
 
   useEffect(() => {
     setIsClient(true)
@@ -61,7 +66,8 @@ export default function ProductForm({ product = null }) {
     
     // Initialize form data safely
     if (product) {
-      setFormData({
+      console.log("🔄 Initializing ProductForm with product data:", product)
+      const initialFormData = {
         ...defaultProduct,
         ...product,
         dimensions: product.dimensions || { length: 0, width: 0, height: 0 },
@@ -69,22 +75,44 @@ export default function ProductForm({ product = null }) {
         tags: product.tags || [],
         images: product.images || [],
         variants: product.variants || [],
-      })
+      }
+      console.log("📝 Setting initial form data:", initialFormData)
+      setFormData(initialFormData)
+    } else {
+      console.log("🆕 Initializing ProductForm for new product")
     }
   }, [product])
 
-  const loadCategories = async () => {
-  try {
-    const response = await fetch("/prodectmanage/api/categories") // fix path here
-    if (!response.ok) {
-      throw new Error("Failed to fetch categories")
+  // Debug tab changes
+  useEffect(() => {
+    console.log("🔍 Current tab changed to:", currentTab)
+    tabRef.current = currentTab // Update ref when tab changes
+  }, [currentTab])
+
+  // Initialize tab from ref on component mount/re-render
+  useEffect(() => {
+    if (tabRef.current && tabRef.current !== currentTab) {
+      console.log("🔍 Restoring tab from ref:", tabRef.current)
+      setCurrentTab(tabRef.current)
     }
-    const data = await response.json()
-    setCategorySystem(data)
-  } catch (error) {
-    console.error("Error loading categories:", error)
+  }, [])
+
+  const loadCategories = async () => {
+    try {
+      console.log("🔄 Loading categories...")
+      const response = await fetch("/prodectmanage/api/categories")
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories")
+      }
+      const data = await response.json()
+      console.log("📂 Categories loaded:", data)
+      setCategorySystem(data)
+    } catch (error) {
+      console.error("❌ Error loading categories:", error)
+      // Set empty object to prevent infinite loading
+      setCategorySystem({})
+    }
   }
-}
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -170,7 +198,7 @@ export default function ProductForm({ product = null }) {
   const handlePreview = () => {
     const errors = validateForm()
     if (errors.length > 0) {
-      alert("Please fix the following errors:\n" + errors.join("\n"))
+      showError("Validation Errors", "Please fix the following errors:\n" + errors.join("\n"))
       return
     }
     
@@ -259,15 +287,32 @@ const handleSubmit = async () => {
       variants: formData.variants || [],
       status: formData.status || "draft",
       // Add timestamps
-      createdAt: new Date(),
+
       updatedAt: new Date(),
     };
 
-    console.log("📦 Sending product data to MongoDB:", productData);
+    // Only add createdAt for new products
+    if (!product) {
+      productData.createdAt = new Date();
+    }
 
-    const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/products`;
-    const url = product ? `${API_URL}/${product.id}` : API_URL;
+    console.log("📦 Sending product data to MongoDB:", productData);
+    console.log("🔍 Category and Filters Debug:", {
+      mainCategory: formData.mainCategory,
+      categoryName: categorySystem[formData.mainCategory]?.name,
+      filters: formData.filters,
+      filtersKeys: Object.keys(formData.filters || {}),
+      filtersValues: Object.values(formData.filters || {}),
+      totalFilters: Object.values(formData.filters || {}).flat().length
+    });
+
+    // Use hardcoded URL for now to avoid double /api issue
+    const baseURL = "http://localhost:5000";
+    const url = product ? `${baseURL}/api/products/${product.id}` : `${baseURL}/api/products`;
+
     const method = product ? "PUT" : "POST";
+
+    console.log(`🔄 ${method} request to:`, url);
 
     const response = await fetch(url, {
       method,
@@ -314,6 +359,30 @@ const handleSubmit = async () => {
     return { label: "In Stock", color: "default" }
   }
 
+  const handleEditStart = (field, value) => {
+    setEditingField(field)
+    setEditValue(value?.toString() || "")
+  }
+
+  const handleEditSave = (field) => {
+    if (field === "stock") {
+      handleInputChange(field, Number(editValue) || 0)
+    } else if (field === "retailPrice" || field === "costPrice" || field === "salePrice") {
+      handleInputChange(field, Number(editValue) || 0)
+    } else if (field === "weight") {
+      handleInputChange(field, Number(editValue) || 0)
+    } else {
+      handleInputChange(field, editValue)
+    }
+    setEditingField(null)
+    setEditValue("")
+  }
+
+  const handleEditCancel = () => {
+    setEditingField(null)
+    setEditValue("")
+  }
+
   // Confirmation Step
   if (currentStep === "confirm") {
     return (
@@ -328,6 +397,11 @@ const handleSubmit = async () => {
             </h1>
             <p className="text-gray-600 mb-4">
               Your product "{formData.name}" has been {product ? "updated" : "created"} and is now stored in MongoDB.
+
+            </p>
+            <p className="text-sm text-gray-500 mb-4">
+              {product ? "All changes have been saved to the database." : "The new product has been added to your inventory."}
+
             </p>
             
             {/* Show stored data summary */}
@@ -357,7 +431,7 @@ const handleSubmit = async () => {
             </div>
             
             <div className="mt-6">
-              <Button onClick={() => router.push("/")}>Return to Dashboard</Button>
+              <Button onClick={() => router.push("/prodectmanage")}>Return to Products</Button>
             </div>
           </CardContent>
         </Card>
@@ -507,27 +581,126 @@ const handleSubmit = async () => {
                 <CardTitle>Pricing & Profit</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span>Cost Price:</span>
-                  <span>${formData.costPrice.toFixed(2)}</span>
+                  <div className="flex items-center gap-2">
+                    {editingField === "costPrice" ? (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs">£</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="w-20 h-8 text-sm"
+                          autoFocus
+                        />
+                        <Button size="sm" onClick={() => handleEditSave("costPrice")} className="h-8 px-2">
+                          ✓
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleEditCancel} className="h-8 px-2">
+                          ✕
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>£{formData.costPrice.toFixed(2)}</span>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleEditStart("costPrice", formData.costPrice)}
+                          className="h-6 w-6 p-0 text-xs"
+                        >
+                          ✏️
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span>Retail Price:</span>
-                  <span>${formData.retailPrice.toFixed(2)}</span>
+                  <div className="flex items-center gap-2">
+                    {editingField === "retailPrice" ? (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs">£</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="w-20 h-8 text-sm"
+                          autoFocus
+                        />
+                        <Button size="sm" onClick={() => handleEditSave("retailPrice")} className="h-8 px-2">
+                          ✓
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleEditCancel} className="h-8 px-2">
+                          ✕
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>£{formData.retailPrice.toFixed(2)}</span>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleEditStart("retailPrice", formData.retailPrice)}
+                          className="h-6 w-6 p-0 text-xs"
+                        >
+                          ✏️
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {formData.salePrice > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between items-center text-green-600">
                     <span>Sale Price:</span>
-                    <span>${formData.salePrice.toFixed(2)}</span>
+                    <div className="flex items-center gap-2">
+                      {editingField === "salePrice" ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs">£</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="w-20 h-8 text-sm"
+                            autoFocus
+                          />
+                          <Button size="sm" onClick={() => handleEditSave("salePrice")} className="h-8 px-2">
+                            ✓
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={handleEditCancel} className="h-8 px-2">
+                            ✕
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span>£{formData.salePrice.toFixed(2)}</span>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleEditStart("salePrice", formData.salePrice)}
+                            className="h-6 w-6 p-0 text-xs"
+                          >
+                            ✏️
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div className="flex justify-between font-medium border-t pt-2">
                   <span>Selling Price:</span>
-                  <span>${(formData.salePrice > 0 ? formData.salePrice : formData.retailPrice).toFixed(2)}</span>
+                  <span>£{(formData.salePrice > 0 ? formData.salePrice : formData.retailPrice).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Profit Margin:</span>
-                  <Badge variant={profitMargin < 10 ? "destructive" : profitMargin < 25 ? "secondary" : "default"}>
+                  <Badge variant={Number(profitMargin) < 10 ? "destructive" : Number(profitMargin) < 25 ? "secondary" : "default"}>
                     {profitMargin}%
                   </Badge>
                 </div>
@@ -540,17 +713,81 @@ const handleSubmit = async () => {
                 <CardTitle>Inventory & Shipping</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span>Stock:</span>
-                  <span>{formData.stock} units</span>
+                  <div className="flex items-center gap-2">
+                    {editingField === "stock" ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="w-20 h-8 text-sm"
+                          autoFocus
+                        />
+                        <Button size="sm" onClick={() => handleEditSave("stock")} className="h-8 px-2">
+                          ✓
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleEditCancel} className="h-8 px-2">
+                          ✕
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>{formData.stock} units</span>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleEditStart("stock", formData.stock)}
+                          className="h-6 w-6 p-0 text-xs"
+                        >
+                          ✏️
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span>Status:</span>
                   <Badge variant={stockStatus.color}>{stockStatus.label}</Badge>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span>Weight:</span>
-                  <span>{formData.weight} kg</span>
+                  <div className="flex items-center gap-2">
+                    {editingField === "weight" ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="w-20 h-8 text-sm"
+                          autoFocus
+                        />
+                        <span className="text-xs">kg</span>
+                        <Button size="sm" onClick={() => handleEditSave("weight")} className="h-8 px-2">
+                          ✓
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleEditCancel} className="h-8 px-2">
+                          ✕
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>{formData.weight} kg</span>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleEditStart("weight", formData.weight)}
+                          className="h-6 w-6 p-0 text-xs"
+                        >
+                          ✏️
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span>Dimensions:</span>
@@ -655,7 +892,31 @@ const handleSubmit = async () => {
   // Form Step
   return (
     <form className="space-y-6">
-      <Tabs defaultValue="basic" className="w-full">
+
+      {/* Debug info for editing */}
+      {product && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-blue-600 font-semibold">✏️ Editing Product</span>
+            <span className="text-sm text-blue-600">ID: {product.id}</span>
+          </div>
+          <p className="text-sm text-blue-700">
+            All fields are pre-filled with existing data. Make your changes and click "Preview Changes" to continue.
+          </p>
+        </div>
+      )}
+      
+      <Tabs 
+        value={currentTab} 
+        onValueChange={(value) => {
+          console.log("🔍 Tab changed from", currentTab, "to", value)
+          setCurrentTab(value)
+          tabRef.current = value
+        }} 
+        className="w-full"
+      >
+
+     
         <TabsList className="flex w-full overflow-x-auto gap-1 p-1">
           <TabsTrigger value="basic" className="text-xs px-2 py-2 whitespace-nowrap">Basic Info</TabsTrigger>
           <TabsTrigger value="categories" className="text-xs px-2 py-2 whitespace-nowrap">Categories</TabsTrigger>
@@ -673,21 +934,29 @@ const handleSubmit = async () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="name">Product Name *</Label>
+                  <Label htmlFor="name">
+                    Product Name * 
+                    {product && <span className="text-blue-600 text-xs ml-2">(Pre-filled)</span>}
+                  </Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     required
+                    className={product ? "border-blue-200 bg-blue-50" : ""}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="sku">SKU *</Label>
+                  <Label htmlFor="sku">
+                    SKU * 
+                    {product && <span className="text-blue-600 text-xs ml-2">(Pre-filled)</span>}
+                  </Label>
                   <Input
                     id="sku"
                     value={formData.sku}
                     onChange={(e) => handleInputChange("sku", e.target.value)}
                     required
+                    className={product ? "border-blue-200 bg-blue-50" : ""}
                   />
                 </div>
               </div>
@@ -730,15 +999,26 @@ const handleSubmit = async () => {
         </TabsContent>
 
         <TabsContent value="categories">
-          <CategoryFilters
-            category={formData.mainCategory}
-            tags={formData.tags}
-            onCategoryChange={handleCategoryChange}
-            onTagsChange={(tags) => handleInputChange("tags", tags)}
-            onFiltersChange={handleFiltersChange}
-            selectedFilters={formData.filters}
-            isProductForm={true}
-          />
+          {Object.keys(categorySystem).length === 0 ? (
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mr-3"></div>
+                  <span>Loading categories...</span>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <CategoryFilters
+              category={formData.mainCategory}
+              tags={formData.tags}
+              onCategoryChange={handleCategoryChange}
+              onTagsChange={(tags) => handleInputChange("tags", tags)}
+              onFiltersChange={handleFiltersChange}
+              selectedFilters={formData.filters}
+              isProductForm={true}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="media">
@@ -784,23 +1064,33 @@ const handleSubmit = async () => {
           />
         </TabsContent>
 
-        <TabsContent value="variants">
-          <VariantsSection
-            variants={formData.variants}
-            onChange={(variants) => handleInputChange("variants", variants)}
-          />
-        </TabsContent>
+
       </Tabs>
 
       <div className="flex justify-end space-x-4">
-        <Button type="button" variant="outline" onClick={() => router.push("/")}>
+        <Button type="button" variant="outline" onClick={() => router.push("/prodectmanage")}>
           Cancel
         </Button>
         <Button type="button" onClick={handlePreview}>
           <Eye className="w-4 h-4 mr-2" />
-          Preview Product
+          {product ? "Preview Changes" : "Preview Product"}
         </Button>
       </div>
+
+      {/* Custom Modal */}
+      <Modal
+        isOpen={isOpen}
+        onClose={closeModal}
+        title={config.title}
+        message={config.message}
+        type={config.type}
+        onConfirm={config.onConfirm}
+        confirmText={config.confirmText}
+        cancelText={config.cancelText}
+        showCancel={config.showCancel}
+      >
+        {config.children}
+      </Modal>
     </form>
   )
 }

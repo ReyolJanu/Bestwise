@@ -9,6 +9,9 @@ import { Badge } from "../../../../components/ui/badge"
 import { Textarea } from "../../../../components/ui/textarea"
 import { Plus, X, Folder, Edit2, Save, Settings, Trash2, Eye, Package, Search, Edit, Check } from "lucide-react"
 import Link from "next/link"
+
+import { Modal, useConfirmModal } from "../../../../components/ui/modal"
+
 import { useParams } from "next/navigation"
 
 export default function CategoryFilters({
@@ -26,6 +29,11 @@ export default function CategoryFilters({
   const [categorySystem, setCategorySystem] = useState({})
   const [selectedMainCategory, setSelectedMainCategory] = useState(category || "")
   const [currentSelectedFilters, setCurrentSelectedFilters] = useState(selectedFilters || {})
+  
+  // Debug currentSelectedFilters changes
+  useEffect(() => {
+    console.log("🔍 currentSelectedFilters changed:", currentSelectedFilters);
+  }, [currentSelectedFilters])
   const [editingItems, setEditingItems] = useState({})
   const [newItemInputs, setNewItemInputs] = useState({})
   const [showAddInput, setShowAddInput] = useState({})
@@ -36,6 +44,9 @@ export default function CategoryFilters({
   const [showProducts, setShowProducts] = useState(false)
   const [editingMainCategory, setEditingMainCategory] = useState(null)
   const [mainCategoryEditForm, setMainCategoryEditForm] = useState({ name: "", key: "", description: "" })
+
+  const { isOpen, config, showDelete, showSuccess, showError, closeModal } = useConfirmModal()
+
   const [product, setProduct] = useState(null)
   const [attributes, setAttributes] = useState([])
   const [selectedAttributeValue, setSelectedAttributeValue] = useState(null)
@@ -58,8 +69,23 @@ export default function CategoryFilters({
   }, [category])
 
   useEffect(() => {
+    console.log("🔍 CategoryFilters received selectedFilters:", selectedFilters);
     if (selectedFilters && Object.keys(selectedFilters).length > 0) {
+      console.log("🔍 Setting currentSelectedFilters to:", selectedFilters);
       setCurrentSelectedFilters(selectedFilters)
+      
+      // Also initialize selectedAttributeValues for editing products
+      const attributeValues = {};
+      Object.entries(selectedFilters).forEach(([key, values]) => {
+        if (Array.isArray(values) && values.length > 0) {
+          // For editing, we want to show the first selected value
+          attributeValues[key] = values[0];
+        } else if (typeof values === 'string') {
+          attributeValues[key] = values;
+        }
+      });
+      console.log("🔍 Initializing selectedAttributeValues for editing:", attributeValues);
+      setSelectedAttributeValues(attributeValues);
     }
   }, [selectedFilters])
 
@@ -93,6 +119,23 @@ export default function CategoryFilters({
       loadProducts()
     }
   }, [isProductForm])
+
+  // Initialize selectedAttributeValues when category system loads and we have selectedFilters
+  useEffect(() => {
+    if (Object.keys(categorySystem).length > 0 && selectedFilters && Object.keys(selectedFilters).length > 0 && isProductForm) {
+      console.log("🔍 Category system loaded, initializing selectedAttributeValues from selectedFilters:", selectedFilters);
+      const attributeValues = {};
+      Object.entries(selectedFilters).forEach(([key, values]) => {
+        if (Array.isArray(values) && values.length > 0) {
+          attributeValues[key] = values[0];
+        } else if (typeof values === 'string') {
+          attributeValues[key] = values;
+        }
+      });
+      console.log("🔍 Setting selectedAttributeValues:", attributeValues);
+      setSelectedAttributeValues(attributeValues);
+    }
+  }, [categorySystem, selectedFilters, isProductForm])
 
   // Filter products when category or filters change
   useEffect(() => {
@@ -195,19 +238,19 @@ export default function CategoryFilters({
   // Create new main category
   const createNewCategory = async () => {
     if (!newCategoryForm.name || !newCategoryForm.key) {
-      alert("Please fill in category name and key")
+      showError("Validation Error", "Please fill in category name and key")
       return
     }
 
     if (categorySystem[newCategoryForm.key]) {
-      alert("Category key already exists")
+      showError("Validation Error", "Category key already exists")
       return
     }
 
     // Validate that at least one attribute has items
     const hasValidAttributes = newCategoryForm.attributes.some((attr) => attr.items.length > 0)
     if (!hasValidAttributes) {
-      alert("Please add at least one item to your category attributes")
+      showError("Validation Error", "Please add at least one item to your category attributes")
       return
     }
 
@@ -236,7 +279,11 @@ export default function CategoryFilters({
     })
     setShowCreateCategoryForm(false)
 
+
+            showSuccess("Success", `Category "${newCategoryForm.name}" created successfully and selected!`)
+
     alert(`Category "${newCategoryForm.name}" created successfully and selected!`)
+
   }
 
   // Add attribute to new category form
@@ -251,7 +298,7 @@ export default function CategoryFilters({
     const exists = newCategoryForm.attributes.some((attr) => attr.name.toLowerCase() === attributeName.toLowerCase())
 
     if (exists) {
-      alert("An attribute with this name already exists!")
+      showError("Validation Error", "An attribute with this name already exists!")
       return
     }
 
@@ -277,7 +324,7 @@ export default function CategoryFilters({
 
     // Check for duplicates
     if (currentAttribute.items.includes(trimmedItem)) {
-      alert("This item already exists in this attribute!")
+      showError("Validation Error", "This item already exists in this attribute!")
       return
     }
 
@@ -331,11 +378,18 @@ export default function CategoryFilters({
     setSelectedMainCategory(categoryKey)
     const emptyFilters = {}
     setCurrentSelectedFilters(emptyFilters)
+    setSelectedAttributeValues({})
 
     // Notify parent components
     onCategoryChange(categoryKey)
     if (onFiltersChange) {
       onFiltersChange(emptyFilters)
+    }
+    
+    // If we're editing a product and have selectedFilters, try to match them to the new category
+    if (isProductForm && selectedFilters && Object.keys(selectedFilters).length > 0) {
+      console.log("🔍 Category changed, checking if selectedFilters match new category:", categoryKey);
+      // The selectedFilters will be re-processed by the useEffect above
     }
   }
 
@@ -365,7 +419,14 @@ export default function CategoryFilters({
 
   // Delete main category
   const deleteMainCategory = async (categoryKey) => {
+
+    showDelete(
+      "Delete Category",
+      `Delete the entire "${categorySystem[categoryKey].name}" category? This cannot be undone.`,
+      async () => {
+
     if (confirm(`Delete the entire "${categorySystem[categoryKey].name}" category? This cannot be undone.`)) {
+
       try {
         // Delete from database
         const response = await fetch(`http://localhost:5000/api/categories/${categoryKey}`, {
@@ -396,16 +457,19 @@ export default function CategoryFilters({
           setEditingMainCategory(null);
           setMainCategoryEditForm({ name: "", key: "", description: "" });
 
-          alert(`Category "${deletedCategoryName}" deleted successfully!`);
+
+          showSuccess("Success", `Category "${deletedCategoryName}" deleted successfully!`);
         } else {
           const errorData = await response.json();
-          alert(`Failed to delete category: ${errorData.message || 'Unknown error'}`);
+          showError("Error", `Failed to delete category: ${errorData.message || 'Unknown error'}`);
         }
       } catch (error) {
         console.error("Error deleting category:", error);
-        alert("Error deleting category. Please try again.");
+        showError("Error", "Error deleting category. Please try again.");
+
+         
       }
-    }
+    })
   }
 
   // CRUD Operations for existing categories
@@ -445,7 +509,10 @@ export default function CategoryFilters({
   }
 
   const deleteItem = async (categoryKey, filterType, itemToDelete) => {
-    if (confirm(`Delete "${itemToDelete}"?`)) {
+    showDelete(
+      "Delete Item",
+      `Delete "${itemToDelete}"?`,
+      async () => {
       const updatedCategories = {
         ...categorySystem,
         [categoryKey]: {
@@ -462,7 +529,7 @@ export default function CategoryFilters({
         ...prev,
         [filterType]: prev[filterType]?.filter((item) => item !== itemToDelete) || [],
       }))
-    }
+    })
   }
 
   const startEditing = (categoryKey, filterType, item) => {
@@ -482,13 +549,334 @@ export default function CategoryFilters({
   }
 
   const deleteProduct = async (productId) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      try {
-        await fetch(`/api/products/${productId}`, { method: "DELETE" })
-        loadProducts() // Reload products
-      } catch (error) {
-        console.error("Error deleting product:", error)
+    showDelete(
+      "Delete Product",
+      "Are you sure you want to delete this product?",
+      async () => {
+        try {
+          await fetch(`/api/products/${productId}`, { method: "DELETE" })
+          loadProducts() // Reload products
+          showSuccess("Success", "Product deleted successfully!")
+        } catch (error) {
+          console.error("Error deleting product:", error)
+          showError("Error", "Failed to delete product. Please try again.")
+        }
       }
+    )
+  }
+
+  // Add new attribute value to database and update state
+  const addAttributeValue = async (attributeName, newValue) => {
+    if (!newValue || !newValue.trim()) return;
+    
+    const trimmedValue = newValue.trim();
+    
+    try {
+      // Check if value already exists
+      const existingAttribute = attributes.find(attr => attr.name === attributeName);
+      if (existingAttribute && existingAttribute.items.includes(trimmedValue)) {
+        showError("Validation Error", `"${trimmedValue}" already exists in this attribute!`);
+        return;
+      }
+
+      // Add to database
+      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ value: trimmedValue })
+      });
+
+      if (response.ok) {
+        // Update local state
+        const updatedAttributes = attributes.map(attribute => {
+          if (attribute.name === attributeName) {
+            return {
+              ...attribute,
+              items: [...attribute.items, trimmedValue]
+            };
+          }
+          return attribute;
+        });
+        setAttributes(updatedAttributes);
+        
+        // Show success message
+        showSuccess("Success", `"${trimmedValue}" added successfully to ${attributeName}!`, () => {
+          // Stay on the same page - no navigation
+        });
+      } else {
+        const errorData = await response.json();
+        showError("Error", `Failed to add value: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error adding attribute value:', error);
+      showError("Error", "Error adding attribute value. Please try again.");
+    }
+  }
+
+  // Add new attribute value to category system (for second section)
+  const addAttributeValueToCategory = async (attributeName, newValue) => {
+    if (!newValue || !newValue.trim()) return;
+    
+    const trimmedValue = newValue.trim();
+    
+    try {
+      // Check if value already exists in category system
+      const category = categorySystem[selectedMainCategory];
+      if (category && category.attributes) {
+        const attribute = category.attributes.find(attr => attr.name === attributeName);
+        if (attribute && attribute.items.includes(trimmedValue)) {
+          showError("Validation Error", `"${trimmedValue}" already exists in this attribute!`);
+          return;
+        }
+      }
+
+      // Add to database
+      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ value: trimmedValue })
+      });
+
+      if (response.ok) {
+        // Update category system state
+        const updatedCategorySystem = { ...categorySystem };
+        const category = updatedCategorySystem[selectedMainCategory];
+        if (category && category.attributes) {
+          const updatedAttributes = category.attributes.map(attribute => {
+            if (attribute.name === attributeName) {
+              return {
+                ...attribute,
+                items: [...attribute.items, trimmedValue]
+              };
+            }
+            return attribute;
+          });
+          updatedCategorySystem[selectedMainCategory] = {
+            ...category,
+            attributes: updatedAttributes
+          };
+          setCategorySystem(updatedCategorySystem);
+        }
+        
+        // Show success message
+        showSuccess("Success", `"${trimmedValue}" added successfully to ${attributeName}!`, () => {
+          // Stay on the same page - no navigation
+        });
+      } else {
+        const errorData = await response.json();
+        showError("Error", `Failed to add value: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error adding attribute value:', error);
+      showError("Error", "Error adding attribute value. Please try again.");
+    }
+  }
+
+  // Start editing attribute value
+  const startEditingAttributeValue = (attributeName, oldValue) => {
+    setEditingAttributeValues(prev => ({
+      ...prev,
+      [`${attributeName}-${oldValue}`]: oldValue
+    }));
+  };
+
+  // Cancel editing attribute value
+  const cancelEditingAttributeValue = (attributeName, oldValue) => {
+    setEditingAttributeValues(prev => {
+      const newState = { ...prev };
+      delete newState[`${attributeName}-${oldValue}`];
+      return newState;
+    });
+  };
+
+  // Save edited attribute value
+  const saveEditedAttributeValue = async (attributeName, oldValue, newValue) => {
+    console.log('Saving edited value:', { attributeName, oldValue, newValue }); // Debug log
+    
+    if (!newValue || !newValue.trim()) {
+      showError("Validation Error", "Value cannot be empty!");
+      return;
+    }
+
+    const trimmedValue = newValue.trim();
+    
+    if (trimmedValue === oldValue) {
+      cancelEditingAttributeValue(attributeName, oldValue);
+      return;
+    }
+
+    try {
+      // Check if new value already exists
+      const category = categorySystem[selectedMainCategory];
+      if (category && category.attributes) {
+        const attribute = category.attributes.find(attr => attr.name === attributeName);
+        if (attribute && attribute.items.includes(trimmedValue) && trimmedValue !== oldValue) {
+          showError("Validation Error", `"${trimmedValue}" already exists in this attribute!`);
+          return;
+        }
+      }
+
+      console.log('Making PUT request to:', `http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items/${encodeURIComponent(oldValue)}`);
+      console.log('Request body:', { newValue: trimmedValue });
+
+      // Update in database
+      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items/${encodeURIComponent(oldValue)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ newValue: trimmedValue })
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('Response data:', responseData);
+
+        // Update category system state
+        const updatedCategorySystem = { ...categorySystem };
+        const category = updatedCategorySystem[selectedMainCategory];
+        if (category && category.attributes) {
+          const updatedAttributes = category.attributes.map(attribute => {
+            if (attribute.name === attributeName) {
+              return {
+                ...attribute,
+                items: attribute.items.map(item => item === oldValue ? trimmedValue : item)
+              };
+            }
+            return attribute;
+          });
+          updatedCategorySystem[selectedMainCategory] = {
+            ...category,
+            attributes: updatedAttributes
+          };
+          setCategorySystem(updatedCategorySystem);
+        }
+
+        // Update attributes state for first section
+        const updatedAttributes = attributes.map(attribute => {
+          if (attribute.name === attributeName) {
+            return {
+              ...attribute,
+              items: attribute.items.map(item => item === oldValue ? trimmedValue : item)
+            };
+          }
+          return attribute;
+        });
+        setAttributes(updatedAttributes);
+
+        // Update selected values if the edited value was selected
+        if (selectedAttributeValues[attributeName] === oldValue) {
+          setSelectedAttributeValues(prev => ({
+            ...prev,
+            [attributeName]: trimmedValue
+          }));
+        }
+
+        // Exit edit mode
+        cancelEditingAttributeValue(attributeName, oldValue);
+        
+        showSuccess("Success", `"${oldValue}" updated to "${trimmedValue}" successfully!`, () => {
+          // Stay on the same page - no navigation
+        });
+      } else {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        showError("Error", `Failed to update value: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error updating attribute value:', error);
+      showError("Error", "Error updating attribute value. Please try again.");
+    }
+  };
+
+  // Edit main category
+  const startEditMainCategory = (categoryKey) => {
+    setEditingMainCategory(categoryKey)
+    setMainCategoryEditForm({
+      name: categorySystem[categoryKey].name,
+      key: categoryKey,
+      description: categorySystem[categoryKey].description || ""
+    })
+  }
+  const cancelEditMainCategory = () => {
+    setEditingMainCategory(null)
+    setMainCategoryEditForm({ name: "", key: "", description: "" })
+  }
+  const saveEditMainCategory = async (oldKey) => {
+    try {
+      // Validate form data
+      if (!mainCategoryEditForm.name || !mainCategoryEditForm.key) {
+        showError("Validation Error", "Please fill in category name and key");
+        return;
+      }
+
+      // Check if new key already exists (if key changed)
+      if (mainCategoryEditForm.key !== oldKey && categorySystem[mainCategoryEditForm.key]) {
+        showError("Validation Error", "Category key already exists");
+        return;
+      }
+
+      // Prepare the updated category data
+      const updatedCategoryData = {
+        name: mainCategoryEditForm.name,
+        key: mainCategoryEditForm.key,
+        description: mainCategoryEditForm.description,
+        attributes: categorySystem[oldKey].attributes || []
+      };
+
+      // Update in database
+      const response = await fetch(`http://localhost:5000/api/categories/${oldKey}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedCategoryData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update local state immediately
+        const updatedCategories = { ...categorySystem };
+        
+        // If key changed, move the category to new key
+        if (mainCategoryEditForm.key !== oldKey) {
+          updatedCategories[mainCategoryEditForm.key] = result.data;
+          delete updatedCategories[oldKey];
+          
+          // Update selected category if it was the edited one
+          if (selectedMainCategory === oldKey) {
+            setSelectedMainCategory(mainCategoryEditForm.key);
+            onCategoryChange(mainCategoryEditForm.key);
+          }
+        } else {
+          updatedCategories[oldKey] = result.data;
+        }
+        
+        setCategorySystem(updatedCategories);
+        
+        // Clear editing state
+        setEditingMainCategory(null);
+        setMainCategoryEditForm({ name: "", key: "", description: "" });
+        
+        showSuccess("Success", `Category "${mainCategoryEditForm.name}" updated successfully!`, () => {
+          // Stay on the same page - no navigation
+          console.log("Category updated successfully, staying on current page");
+        });
+      } else {
+        const errorData = await response.json();
+        showError("Error", `Failed to update category: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error("Error updating category:", error);
+      showError("Error", "Error updating category. Please try again.");
     }
   }
 
@@ -1351,7 +1739,7 @@ export default function CategoryFilters({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>{isProductForm ? "Select Product Filters" : `Filters for ${currentCategoryData.name}`}</span>
+                <span>{isProductForm ? "Select Product Filters" : `Filters for ${currentCategoryData?.name || selectedMainCategory || "No category"}`}</span>
                 <div className="flex gap-2">
                   <Badge variant="outline">
                     {Object.values(currentSelectedFilters).flat().length + Object.keys(selectedAttributeValues).length} total selections
@@ -1550,45 +1938,56 @@ export default function CategoryFilters({
                             type="button"
                             onClick={async (e) => {
                               e.stopPropagation();
-                              if (confirm(`Delete "${item}" from ${attr.displayName}?`)) {
-                                try {
-                                  // Delete from database first
-                                  const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
-                                    method: 'DELETE',
-                                    headers: {
-                                      'Content-Type': 'application/json'
-                                    }
-                                  });
 
-                                  if (response.ok) {
-                                    // Remove the item from the attribute
-                                    const updatedAttributes = attributes.map(attribute => {
-                                      if (attribute.name === attr.name) {
-                                        return {
-                                          ...attribute,
-                                          items: attribute.items.filter(i => i !== item)
-                                        };
+                              showDelete(
+                                "Delete Attribute Value",
+                                `Delete "${item}" from ${attr.displayName}?`,
+                                async () => {
+                                  try {
+                                    // Delete from database first
+                                    const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
+                                      method: 'DELETE',
+                                      headers: {
+                                        'Content-Type': 'application/json'
                                       }
-                                      return attribute;
                                     });
-                                    setAttributes(updatedAttributes);
-                                    
-                                    // Also remove from selected values if it was selected
-                                    if (selectedAttributeValues[attr.name] === item) {
-                                      setSelectedAttributeValues(prev => {
-                                        const newValues = { ...prev };
-                                        delete newValues[attr.name];
-                                        return newValues;
+
+                                    if (response.ok) {
+                                      // Remove the item from the attribute
+                                      const updatedAttributes = attributes.map(attribute => {
+                                        if (attribute.name === attr.name) {
+                                          return {
+                                            ...attribute,
+                                            items: attribute.items.filter(i => i !== item)
+                                          };
+                                        }
+                                        return attribute;
                                       });
+                                      setAttributes(updatedAttributes);
+                                      
+                                      // Also remove from selected values if it was selected
+                                      if (selectedAttributeValues[attr.name] === item) {
+                                        setSelectedAttributeValues(prev => {
+                                          const newValues = { ...prev };
+                                          delete newValues[attr.name];
+                                          return newValues;
+                                        });
+                                      }
+                                      
+                                      showSuccess("Success", `"${item}" deleted successfully!`, () => {
+                                        // Stay on the same page
+                                      });
+                                    } else {
+                                      showError("Error", "Failed to delete from database. Please try again.");
                                     }
-                                  } else {
-                                    alert('Failed to delete from database. Please try again.');
+                                  } catch (error) {
+                                    console.error('Error deleting attribute value:', error);
+                                    showError("Error", "Error deleting attribute value. Please try again.");
                                   }
-                                } catch (error) {
-                                  console.error('Error deleting attribute value:', error);
-                                  alert('Error deleting attribute value. Please try again.');
                                 }
-                              }
+                              );
+
+                              
                             }}
                             style={{
                               background: "none",
@@ -1682,7 +2081,7 @@ export default function CategoryFilters({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Badge variant="default" className="font-medium">
-                  Main Category: {currentCategoryData.name}
+                  Main Category: {currentCategoryData?.name || selectedMainCategory || "No category selected"}
                 </Badge>
               </div>
               {Object.entries(currentSelectedFilters).map(([filterType, items]) => {
@@ -2023,6 +2422,23 @@ export default function CategoryFilters({
           </CardContent>
         </Card>
       )}
+
+
+      {/* Custom Modal */}
+      <Modal
+        isOpen={isOpen}
+        onClose={closeModal}
+        title={config.title}
+        message={config.message}
+        type={config.type}
+        onConfirm={config.onConfirm}
+        confirmText={config.confirmText}
+        cancelText={config.cancelText}
+        showCancel={config.showCancel}
+      >
+        {config.children}
+      </Modal>
+
     </div>
   )
 }
