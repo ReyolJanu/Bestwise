@@ -1,24 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "../../../../components/ui/button"
 import { Input } from "../../../../components/ui/input"
 import { Label } from "../../../../components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../components/ui/card"
 import { Badge } from "../../../../components/ui/badge"
 import { Textarea } from "../../../../components/ui/textarea"
-import { Plus, X, Folder, Edit2, Save, Settings, Trash2, Eye, Package, Search } from "lucide-react"
+import { Plus, X, Folder, Edit2, Save, Settings, Trash2, Eye, Package, Search, Edit, Check } from "lucide-react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 
 export default function CategoryFilters({
   category = "",
   tags = [],
-  onCategoryChange = () => {},
-  onTagsChange = () => {},
-  onFiltersChange = null,
+  onCategoryChange = (categoryKey) => {},
+  onTagsChange = (tags) => {},
+  onFiltersChange = (filters) => {},
   selectedFilters = {},
   isProductForm = false,
 }) {
+  const params = useParams();
+  const productId = params?.id; // Now productId is defined
+
   const [categorySystem, setCategorySystem] = useState({})
   const [selectedMainCategory, setSelectedMainCategory] = useState(category || "")
   const [currentSelectedFilters, setCurrentSelectedFilters] = useState(selectedFilters || {})
@@ -30,13 +34,20 @@ export default function CategoryFilters({
   const [products, setProducts] = useState([])
   const [filteredProducts, setFilteredProducts] = useState([])
   const [showProducts, setShowProducts] = useState(false)
+  const [editingMainCategory, setEditingMainCategory] = useState(null)
+  const [mainCategoryEditForm, setMainCategoryEditForm] = useState({ name: "", key: "", description: "" })
+  const [product, setProduct] = useState(null)
+  const [attributes, setAttributes] = useState([])
+  const [selectedAttributeValue, setSelectedAttributeValue] = useState(null)
+  const [selectedAttributeValues, setSelectedAttributeValues] = useState({})
+  const [editingAttributeValues, setEditingAttributeValues] = useState({})
 
   // New category form state
   const [newCategoryForm, setNewCategoryForm] = useState({
     name: "",
     key: "",
     description: "",
-    attributes: [{ name: "subcategories", displayName: "Subcategories", items: [] }],
+    attributes: [{ name: "subcategories", displayName: "Subcategories", items: [] }]
   })
 
   // Initialize state from props
@@ -51,6 +62,29 @@ export default function CategoryFilters({
       setCurrentSelectedFilters(selectedFilters)
     }
   }, [selectedFilters])
+
+  // Watch for changes in selectedAttributeValues and notify parent
+  useEffect(() => {
+    if (isProductForm && onFiltersChange) {
+      // Convert selectedAttributeValues to the expected filters format
+      const filters = {};
+      Object.entries(selectedAttributeValues).forEach(([key, value]) => {
+        if (value) {
+          filters[key] = [value];
+        }
+      });
+      
+      // Only call onFiltersChange if the filters have actually changed
+      const currentFiltersString = JSON.stringify(filters);
+      const previousFiltersString = JSON.stringify(currentSelectedFilters);
+      
+      if (currentFiltersString !== previousFiltersString) {
+        console.log("🔍 Selected Attribute Values Changed:", selectedAttributeValues);
+        console.log("🔍 Converted Filters:", filters);
+        onFiltersChange(filters);
+      }
+    }
+  }, [selectedAttributeValues, isProductForm, onFiltersChange, currentSelectedFilters]);
 
   // Load categories and products from backend on component mount
   useEffect(() => {
@@ -67,14 +101,35 @@ export default function CategoryFilters({
     }
   }, [selectedMainCategory, currentSelectedFilters, products, isProductForm])
 
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("http://localhost:5000/api/categories");
+        const result = await res.json();
+        const data = result.data;
+        if (Array.isArray(data)) {
+          const categoriesByKey = {};
+          data.forEach(cat => {
+            categoriesByKey[cat.key] = cat;
+          });
+          setCategorySystem(categoriesByKey);
+        } else {
+          console.error("Categories API did not return an array:", data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+      }
+    }
+    fetchCategories();
+  }, []);
+
   const loadCategories = async () => {
     try {
-      const response = await fetch("/prodectmanage/api/categories")
+      const response = await fetch("http://localhost:5000/api/categories")
       const data = await response.json()
       setCategorySystem(data)
     } catch (error) {
       console.error("Error loading categories:", error)
-      loadDefaultCategories()
     } finally {
       setLoading(false)
     }
@@ -82,7 +137,7 @@ export default function CategoryFilters({
 
   const loadProducts = async () => {
     try {
-      const response = await fetch("/api/products")
+      const response = await fetch("http://localhost:5000/api/products")
       const data = await response.json()
       setProducts(data)
     } catch (error) {
@@ -119,76 +174,10 @@ export default function CategoryFilters({
     setFilteredProducts(filtered)
   }
 
-  const loadDefaultCategories = () => {
-    const defaultCategories = {
-      balloons: {
-        name: "Balloons",
-        description: "Party and celebration balloons",
-        subcategories: ["Party Balloons", "Wedding Balloons", "Birthday Balloons", "Seasonal Balloons"],
-        occasions: [
-          "Wedding",
-          "Anniversary",
-          "Valentine's Day",
-          "Graduation",
-          "Baby Shower",
-          "Halloween",
-          "Christmas",
-          "Birthday",
-          "New Year",
-        ],
-        types: [
-          "Confetti",
-          "LED",
-          "Helium-filled",
-          "Air-filled",
-          "Biodegradable",
-          "Stuffed",
-          "Mini",
-          "Starred",
-          "Large",
-          "Jumbo",
-          "Custom",
-        ],
-        colors: ["Pink", "Blue", "Gold", "Silver", "Multi-color", "Green", "Red", "Purple", "Orange", "White"],
-        finishes: ["Matte", "Chrome", "Confetti", "Glitter", "Pearlescent", "Transparent", "Metallic"],
-        sizes: ['Mini (6")', 'Standard (11")', 'Large (18")', 'Jumbo (36")', 'Giant (40"+)'],
-      },
-      cards: {
-        name: "Cards",
-        description: "Greeting cards and stationery",
-        subcategories: ["Greeting Cards", "Birthday Cards", "Wedding Cards", "Thank You Cards"],
-        occasions: [
-          "Wedding",
-          "Anniversary",
-          "Sympathy",
-          "Congratulations",
-          "Thank You",
-          "Get Well",
-          "Birthday",
-          "Valentine's Day",
-          "Christmas",
-          "Mother's Day",
-          "Father's Day",
-        ],
-        recipients: ["Friend", "Family", "Partner", "Colleague", "Parent", "Child", "Boss", "Teacher"],
-        styles: ["Artistic", "Photo", "Pop-up", "Musical", "Handmade", "Vintage", "Modern", "Minimalist"],
-        colors: ["Pink", "Blue", "White", "Gold", "Silver", "Red", "Green", "Purple"],
-        formats: ["A4", "A5", "Square", "Postcard", "Folded", "Single Panel"],
-      },
-      "home-living": {
-        name: "Home & Living",
-        description: "Home decor and living accessories",
-        subcategories: ["Wall Decor", "Table Decor", "Garden Items", "Lighting", "Storage"],
-        productTypes: ["Frames", "Candles", "Decor", "Garden items", "Cushions", "Vases", "Mirrors", "Clocks"],
-        colors: ["White", "Black", "Gold", "Silver", "Blue", "Green", "Brown", "Gray", "Beige"],
-        sizes: ["Small", "Medium", "Large", "Extra Large"],
-        materials: ["Wood", "Metal", "Glass", "Ceramic", "Fabric", "Plastic", "Stone"],
-        rooms: ["Living Room", "Bedroom", "Kitchen", "Bathroom", "Garden", "Office", "Dining Room"],
-        styles: ["Modern", "Vintage", "Rustic", "Minimalist", "Industrial", "Scandinavian", "Bohemian"],
-      },
-    }
-    setCategorySystem(defaultCategories)
-  }
+  // const loadDefaultCategories = () => {
+  //   // s
+  //   setCategorySystem(defaultCategories)
+  // }
 
   // Save categories to backend
   const saveCategories = async (updatedCategories) => {
@@ -222,23 +211,13 @@ export default function CategoryFilters({
       return
     }
 
-    const newCategory = {
-      name: newCategoryForm.name,
-      description: newCategoryForm.description,
-    }
+    console.log("Sending category:", newCategoryForm);
 
-    // Add all attributes with their items
-    newCategoryForm.attributes.forEach((attr) => {
-      newCategory[attr.name] = attr.items
-    })
-
-    const updatedCategories = {
-      ...categorySystem,
-      [newCategoryForm.key]: newCategory,
-    }
-
-    setCategorySystem(updatedCategories)
-    await saveCategories(updatedCategories)
+    await fetch("/api/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newCategoryForm)
+    });
 
     // Auto-select the newly created category
     setSelectedMainCategory(newCategoryForm.key)
@@ -253,11 +232,11 @@ export default function CategoryFilters({
       name: "",
       key: "",
       description: "",
-      attributes: [{ name: "subcategories", displayName: "Subcategories", items: [] }],
+      attributes: [{ name: "subcategories", displayName: "Subcategories", items: [] }]
     })
     setShowCreateCategoryForm(false)
 
-    alert(`Category "${newCategory.name}" created successfully and selected!`)
+    alert(`Category "${newCategoryForm.name}" created successfully and selected!`)
   }
 
   // Add attribute to new category form
@@ -387,19 +366,44 @@ export default function CategoryFilters({
   // Delete main category
   const deleteMainCategory = async (categoryKey) => {
     if (confirm(`Delete the entire "${categorySystem[categoryKey].name}" category? This cannot be undone.`)) {
-      const updatedCategories = { ...categorySystem }
-      delete updatedCategories[categoryKey]
+      try {
+        // Delete from database
+        const response = await fetch(`http://localhost:5000/api/categories/${categoryKey}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
 
-      setCategorySystem(updatedCategories)
-      await saveCategories(updatedCategories)
+        if (response.ok) {
+          // Update local state immediately
+          const updatedCategories = { ...categorySystem };
+          const deletedCategoryName = categorySystem[categoryKey].name;
+          delete updatedCategories[categoryKey];
+          setCategorySystem(updatedCategories);
 
-      if (selectedMainCategory === categoryKey) {
-        setSelectedMainCategory("")
-        setCurrentSelectedFilters({})
-        onCategoryChange("")
-        if (onFiltersChange) {
-          onFiltersChange({})
+          // Clear selected category if it was the deleted one
+          if (selectedMainCategory === categoryKey) {
+            setSelectedMainCategory("");
+            setCurrentSelectedFilters({});
+            onCategoryChange("");
+            if (onFiltersChange) {
+              onFiltersChange({});
+            }
+          }
+
+          // Clear any editing states
+          setEditingMainCategory(null);
+          setMainCategoryEditForm({ name: "", key: "", description: "" });
+
+          alert(`Category "${deletedCategoryName}" deleted successfully!`);
+        } else {
+          const errorData = await response.json();
+          alert(`Failed to delete category: ${errorData.message || 'Unknown error'}`);
         }
+      } catch (error) {
+        console.error("Error deleting category:", error);
+        alert("Error deleting category. Please try again.");
       }
     }
   }
@@ -471,6 +475,7 @@ export default function CategoryFilters({
 
   const clearAllFilters = () => {
     setCurrentSelectedFilters({})
+    setSelectedAttributeValues({})
     if (onFiltersChange) {
       onFiltersChange({})
     }
@@ -487,11 +492,317 @@ export default function CategoryFilters({
     }
   }
 
+  // Add new attribute value to database and update state
+  const addAttributeValue = async (attributeName, newValue) => {
+    if (!newValue || !newValue.trim()) return;
+    
+    const trimmedValue = newValue.trim();
+    
+    try {
+      // Check if value already exists
+      const existingAttribute = attributes.find(attr => attr.name === attributeName);
+      if (existingAttribute && existingAttribute.items.includes(trimmedValue)) {
+        alert(`"${trimmedValue}" already exists in this attribute!`);
+        return;
+      }
+
+      // Add to database
+      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ value: trimmedValue })
+      });
+
+      if (response.ok) {
+        // Update local state
+        const updatedAttributes = attributes.map(attribute => {
+          if (attribute.name === attributeName) {
+            return {
+              ...attribute,
+              items: [...attribute.items, trimmedValue]
+            };
+          }
+          return attribute;
+        });
+        setAttributes(updatedAttributes);
+        
+        // Show success message
+        alert(`"${trimmedValue}" added successfully to ${attributeName}!`);
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to add value: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error adding attribute value:', error);
+      alert('Error adding attribute value. Please try again.');
+    }
+  }
+
+  // Add new attribute value to category system (for second section)
+  const addAttributeValueToCategory = async (attributeName, newValue) => {
+    if (!newValue || !newValue.trim()) return;
+    
+    const trimmedValue = newValue.trim();
+    
+    try {
+      // Check if value already exists in category system
+      const category = categorySystem[selectedMainCategory];
+      if (category && category.attributes) {
+        const attribute = category.attributes.find(attr => attr.name === attributeName);
+        if (attribute && attribute.items.includes(trimmedValue)) {
+          alert(`"${trimmedValue}" already exists in this attribute!`);
+          return;
+        }
+      }
+
+      // Add to database
+      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ value: trimmedValue })
+      });
+
+      if (response.ok) {
+        // Update category system state
+        const updatedCategorySystem = { ...categorySystem };
+        const category = updatedCategorySystem[selectedMainCategory];
+        if (category && category.attributes) {
+          const updatedAttributes = category.attributes.map(attribute => {
+            if (attribute.name === attributeName) {
+              return {
+                ...attribute,
+                items: [...attribute.items, trimmedValue]
+              };
+            }
+            return attribute;
+          });
+          updatedCategorySystem[selectedMainCategory] = {
+            ...category,
+            attributes: updatedAttributes
+          };
+          setCategorySystem(updatedCategorySystem);
+        }
+        
+        // Show success message
+        alert(`"${trimmedValue}" added successfully to ${attributeName}!`);
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to add value: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error adding attribute value:', error);
+      alert('Error adding attribute value. Please try again.');
+    }
+  }
+
+  // Start editing attribute value
+  const startEditingAttributeValue = (attributeName, oldValue) => {
+    setEditingAttributeValues(prev => ({
+      ...prev,
+      [`${attributeName}-${oldValue}`]: oldValue
+    }));
+  };
+
+  // Cancel editing attribute value
+  const cancelEditingAttributeValue = (attributeName, oldValue) => {
+    setEditingAttributeValues(prev => {
+      const newState = { ...prev };
+      delete newState[`${attributeName}-${oldValue}`];
+      return newState;
+    });
+  };
+
+  // Save edited attribute value
+  const saveEditedAttributeValue = async (attributeName, oldValue, newValue) => {
+    console.log('Saving edited value:', { attributeName, oldValue, newValue }); // Debug log
+    
+    if (!newValue || !newValue.trim()) {
+      alert('Value cannot be empty!');
+      return;
+    }
+
+    const trimmedValue = newValue.trim();
+    
+    if (trimmedValue === oldValue) {
+      cancelEditingAttributeValue(attributeName, oldValue);
+      return;
+    }
+
+    try {
+      // Check if new value already exists
+      const category = categorySystem[selectedMainCategory];
+      if (category && category.attributes) {
+        const attribute = category.attributes.find(attr => attr.name === attributeName);
+        if (attribute && attribute.items.includes(trimmedValue) && trimmedValue !== oldValue) {
+          alert(`"${trimmedValue}" already exists in this attribute!`);
+          return;
+        }
+      }
+
+      console.log('Making PUT request to:', `http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items/${encodeURIComponent(oldValue)}`);
+      console.log('Request body:', { newValue: trimmedValue });
+
+      // Update in database
+      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attributeName}/items/${encodeURIComponent(oldValue)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ newValue: trimmedValue })
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('Response data:', responseData);
+
+        // Update category system state
+        const updatedCategorySystem = { ...categorySystem };
+        const category = updatedCategorySystem[selectedMainCategory];
+        if (category && category.attributes) {
+          const updatedAttributes = category.attributes.map(attribute => {
+            if (attribute.name === attributeName) {
+              return {
+                ...attribute,
+                items: attribute.items.map(item => item === oldValue ? trimmedValue : item)
+              };
+            }
+            return attribute;
+          });
+          updatedCategorySystem[selectedMainCategory] = {
+            ...category,
+            attributes: updatedAttributes
+          };
+          setCategorySystem(updatedCategorySystem);
+        }
+
+        // Update attributes state for first section
+        const updatedAttributes = attributes.map(attribute => {
+          if (attribute.name === attributeName) {
+            return {
+              ...attribute,
+              items: attribute.items.map(item => item === oldValue ? trimmedValue : item)
+            };
+          }
+          return attribute;
+        });
+        setAttributes(updatedAttributes);
+
+        // Update selected values if the edited value was selected
+        if (selectedAttributeValues[attributeName] === oldValue) {
+          setSelectedAttributeValues(prev => ({
+            ...prev,
+            [attributeName]: trimmedValue
+          }));
+        }
+
+        // Exit edit mode
+        cancelEditingAttributeValue(attributeName, oldValue);
+        
+        alert(`"${oldValue}" updated to "${trimmedValue}" successfully!`);
+      } else {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        alert(`Failed to update value: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error updating attribute value:', error);
+      alert('Error updating attribute value. Please try again.');
+    }
+  };
+
+  // Edit main category
+  const startEditMainCategory = (categoryKey) => {
+    setEditingMainCategory(categoryKey)
+    setMainCategoryEditForm({
+      name: categorySystem[categoryKey].name,
+      key: categoryKey,
+      description: categorySystem[categoryKey].description || ""
+    })
+  }
+  const cancelEditMainCategory = () => {
+    setEditingMainCategory(null)
+    setMainCategoryEditForm({ name: "", key: "", description: "" })
+  }
+  const saveEditMainCategory = async (oldKey) => {
+    try {
+      // Validate form data
+      if (!mainCategoryEditForm.name || !mainCategoryEditForm.key) {
+        alert("Please fill in category name and key");
+        return;
+      }
+
+      // Check if new key already exists (if key changed)
+      if (mainCategoryEditForm.key !== oldKey && categorySystem[mainCategoryEditForm.key]) {
+        alert("Category key already exists");
+        return;
+      }
+
+      // Prepare the updated category data
+      const updatedCategoryData = {
+        name: mainCategoryEditForm.name,
+        key: mainCategoryEditForm.key,
+        description: mainCategoryEditForm.description,
+        attributes: categorySystem[oldKey].attributes || []
+      };
+
+      // Update in database
+      const response = await fetch(`http://localhost:5000/api/categories/${oldKey}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedCategoryData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update local state immediately
+        const updatedCategories = { ...categorySystem };
+        
+        // If key changed, move the category to new key
+        if (mainCategoryEditForm.key !== oldKey) {
+          updatedCategories[mainCategoryEditForm.key] = result.data;
+          delete updatedCategories[oldKey];
+          
+          // Update selected category if it was the edited one
+          if (selectedMainCategory === oldKey) {
+            setSelectedMainCategory(mainCategoryEditForm.key);
+            onCategoryChange(mainCategoryEditForm.key);
+          }
+        } else {
+          updatedCategories[oldKey] = result.data;
+        }
+        
+        setCategorySystem(updatedCategories);
+        
+        // Clear editing state
+        setEditingMainCategory(null);
+        setMainCategoryEditForm({ name: "", key: "", description: "" });
+        
+        alert(`Category "${mainCategoryEditForm.name}" updated successfully!`);
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to update category: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error("Error updating category:", error);
+      alert("Error updating category. Please try again.");
+    }
+  }
+
   // Get available main categories
   const mainCategories = Object.keys(categorySystem)
   const currentCategoryData = selectedMainCategory ? categorySystem[selectedMainCategory] : null
 
-  const FilterSection = ({ title, filterType, items, categoryKey }) => (
+  const FilterSection = ({ title, filterType, items = [], categoryKey }) => (
     <Card className="mb-4">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-4">
@@ -532,9 +843,9 @@ export default function CategoryFilters({
                   [`${categoryKey}-${filterType}`]: e.target.value,
                 }))
               }
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  addItem(categoryKey, filterType, newItemInputs[`${categoryKey}-${filterType}`])
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.target.value.trim()) {
+                  addItem(categoryKey, filterType, e.target.value.trim())
                 }
                 if (e.key === "Escape") {
                   setShowAddInput((prev) => ({ ...prev, [`${categoryKey}-${filterType}`]: false }))
@@ -563,9 +874,9 @@ export default function CategoryFilters({
 
         {/* Items as inline tags */}
         <div className="flex flex-wrap gap-2">
-          {items.map((item, index) => (
+          {Array.isArray(items) && items.map((item, index) => (
             <div key={index} className="flex items-center">
-              {!isProductForm && editingItems[`${categoryKey}-${filterType}-${item}`] ? (
+              {editingItems[`${categoryKey}-${filterType}-${item}`] ? (
                 <div className="flex items-center gap-1 bg-white border rounded-md px-2 py-1">
                   <Input
                     value={editingItems[`${categoryKey}-${filterType}-${item}`]}
@@ -576,9 +887,9 @@ export default function CategoryFilters({
                       }))
                     }
                     className="h-6 text-sm border-0 p-0 w-24"
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        editItem(categoryKey, filterType, item, editingItems[`${categoryKey}-${filterType}-${item}`])
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && e.target.value.trim()) {
+                        editItem(categoryKey, filterType, item, e.target.value.trim())
                       }
                       if (e.key === "Escape") {
                         cancelEditing(categoryKey, filterType, item)
@@ -591,8 +902,8 @@ export default function CategoryFilters({
                     size="sm"
                     variant="ghost"
                     className="h-5 w-5 p-0"
-                    onClick={() =>
-                      editItem(categoryKey, filterType, item, editingItems[`${categoryKey}-${filterType}-${item}`])
+                    onClick={(e) =>
+                      editItem(categoryKey, filterType, item, e.target.value.trim())
                     }
                   >
                     <Save className="w-3 h-3" />
@@ -621,9 +932,9 @@ export default function CategoryFilters({
                         size="sm"
                         variant="ghost"
                         className="h-4 w-4 p-0 ml-1 hover:text-blue-500"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          startEditing(categoryKey, filterType, item)
+                        onClick={e => {
+                          e.stopPropagation();
+                          startEditing(categoryKey, filterType, item);
                         }}
                       >
                         <Edit2 className="w-3 h-3" />
@@ -633,9 +944,9 @@ export default function CategoryFilters({
                         size="sm"
                         variant="ghost"
                         className="h-4 w-4 p-0 hover:text-red-500"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          deleteItem(categoryKey, filterType, item)
+                        onClick={e => {
+                          e.stopPropagation();
+                          deleteItem(categoryKey, filterType, item);
                         }}
                       >
                         <X className="w-3 h-3" />
@@ -725,6 +1036,43 @@ export default function CategoryFilters({
       </CardContent>
     </Card>
   )
+
+  useEffect(() => {
+    if (productId) {
+      fetch(`http://localhost:5000/api/products/${productId}`)
+        .then(res => res.json())
+        .then(data => setProduct(data));
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    if (!selectedMainCategory) return;
+    async function fetchAttributes() {
+      const res = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}`);
+      const result = await res.json();
+      const category = result.data || result;
+      setAttributes(category.attributes || []);
+    }
+    fetchAttributes();
+  }, [selectedMainCategory]);
+
+  const handleAttributeValueSelect = (attributeName, value) => {
+    console.log("🔍 Attribute Value Selected:", { attributeName, value });
+    
+    setSelectedAttributeValues(prev => {
+      const newValues = { ...prev };
+      if (newValues[attributeName] === value) {
+        // If already selected, deselect it
+        delete newValues[attributeName];
+      } else {
+        // Select the new value
+        newValues[attributeName] = value;
+      }
+      
+      console.log("🔍 Updated Selected Values:", newValues);
+      return newValues;
+    });
+  };
 
   if (loading) {
     return (
@@ -838,7 +1186,7 @@ export default function CategoryFilters({
                     <div className="flex gap-2 mb-3">
                       <Input
                         placeholder={`Add ${attribute.displayName.toLowerCase()} item (e.g., Red, Large, Cotton)`}
-                        onKeyPress={(e) => {
+                        onKeyDown={(e) => {
                           if (e.key === "Enter" && e.target.value.trim()) {
                             addItemToAttribute(attributeIndex, e.target.value.trim())
                             e.target.value = ""
@@ -862,17 +1210,8 @@ export default function CategoryFilters({
 
                     {/* Display items */}
                     <div className="flex flex-wrap gap-2">
-                      {attribute.items.map((item, itemIndex) => (
-                        <Badge key={itemIndex} variant="secondary" className="flex items-center gap-1">
-                          {item}
-                          <button
-                            type="button"
-                            onClick={() => removeItemFromAttribute(attributeIndex, itemIndex)}
-                            className="ml-1 hover:text-red-500"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
+                      {Array.isArray(attribute.items) && attribute.items.map((item) => (
+                        <Badge key={item}>{item}</Badge>
                       ))}
                     </div>
 
@@ -915,10 +1254,10 @@ export default function CategoryFilters({
       {/* Main Category Selection */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between flex-col sm:flex-row gap-4">
             <span>{isProductForm ? "Select Main Category" : `Main Category Selection (${mainCategories.length})`}</span>
             {/* ADD THIS: Show Create New Category button for both product form and regular view */}
-            <Button type="button" variant="outline" onClick={() => setShowCreateCategoryForm(true)}>
+            <Button type="button" variant="outline" onClick={() => setShowCreateCategoryForm(true)} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Create New Category
             </Button>
@@ -936,35 +1275,70 @@ export default function CategoryFilters({
                 }`}
                 onClick={() => handleMainCategorySelect(categoryKey)}
               >
-                {!isProductForm && (
+                <div className="absolute top-2 right-2 flex gap-1 z-10">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={e => { e.stopPropagation(); startEditMainCategory(categoryKey); }}
+                  >
+                    <Edit2 className="w-3 h-3" />
+                  </Button>
                   <Button
                     type="button"
                     variant="destructive"
                     size="sm"
-                    className="absolute top-2 right-2 h-6 w-6 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      deleteMainCategory(categoryKey)
-                    }}
+                    className="h-6 w-6 p-0"
+                    onClick={e => { e.stopPropagation(); deleteMainCategory(categoryKey); }}
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>
-                )}
-
-                <div className={`text-center ${!isProductForm ? "pr-8" : ""}`}>
-                  <h3 className="font-medium text-lg">{categorySystem[categoryKey].name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {categorySystem[categoryKey].description || "No description"}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {Object.keys(categorySystem[categoryKey]).length - 2} attributes
-                  </p>
-                  {selectedMainCategory === categoryKey && (
-                    <Badge variant="default" className="mt-2">
-                      Selected
-                    </Badge>
-                  )}
                 </div>
+                {editingMainCategory === categoryKey ? (
+                  <div className="space-y-2">
+                    <Input value={mainCategoryEditForm.name} onChange={e => setMainCategoryEditForm(f => ({ ...f, name: e.target.value }))} placeholder="Category Name" className="mb-1" />
+                    <Input value={mainCategoryEditForm.key} onChange={e => setMainCategoryEditForm(f => ({ ...f, key: e.target.value }))} placeholder="Category Key" className="mb-1" />
+                    <Input value={mainCategoryEditForm.description} onChange={e => setMainCategoryEditForm(f => ({ ...f, description: e.target.value }))} placeholder="Description" className="mb-1" />
+                    <div className="flex gap-2">
+                      <Button type="button" size="sm" onClick={e => { e.stopPropagation(); saveEditMainCategory(categoryKey) }}>Save</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={e => { e.stopPropagation(); cancelEditMainCategory() }}>Cancel</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`text-center ${!isProductForm ? "pr-8" : ""} flex flex-col items-center relative`}>
+                    <div className="flex items-center gap-2 justify-center w-full mb-1">
+                      <h3 className="font-medium text-lg">{categorySystem[categoryKey].name}</h3>
+                      {!isProductForm && (
+                        <>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={e => { e.stopPropagation(); startEditMainCategory(categoryKey); }}
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={e => { e.stopPropagation(); deleteMainCategory(categoryKey); }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">{categorySystem[categoryKey].description || "No description"}</p>
+                    <p className="text-xs text-gray-400 mt-1">{Object.keys(categorySystem[categoryKey]).length - 2} attributes</p>
+                    {selectedMainCategory === categoryKey && (
+                      <Badge variant="default" className="mt-2">Selected</Badge>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -980,11 +1354,13 @@ export default function CategoryFilters({
                 <span>{isProductForm ? "Select Product Filters" : `Filters for ${currentCategoryData.name}`}</span>
                 <div className="flex gap-2">
                   <Badge variant="outline">
-                    {Object.values(currentSelectedFilters).flat().length} total selections
+                    {Object.values(currentSelectedFilters).flat().length + Object.keys(selectedAttributeValues).length} total selections
                   </Badge>
-                  <Button type="button" variant="outline" size="sm" onClick={clearAllFilters}>
-                    Clear All
-                  </Button>
+                  {(Object.values(currentSelectedFilters).flat().length > 0 || Object.keys(selectedAttributeValues).length > 0) && (
+                    <Button type="button" variant="outline" size="sm" onClick={clearAllFilters}>
+                      Clear All
+                    </Button>
+                  )}
                   {!isProductForm && (
                     <Button type="button" variant="default" size="sm" onClick={() => setShowProducts(!showProducts)}>
                       <Search className="w-4 h-4 mr-2" />
@@ -997,17 +1373,243 @@ export default function CategoryFilters({
           </Card>
 
           {/* Render all attributes dynamically */}
-          {Object.entries(currentCategoryData)
-            .filter(([key]) => !["name", "description"].includes(key))
-            .map(([filterType, items]) => (
-              <FilterSection
-                key={filterType}
-                title={filterType.charAt(0).toUpperCase() + filterType.slice(1)}
-                filterType={filterType}
-                items={items}
-                categoryKey={selectedMainCategory}
-              />
-            ))}
+          {attributes.map(attr => (
+            <div key={attr.name} style={{ marginBottom: "1.5rem" }}>
+              <h3 style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>{attr.displayName}</h3>
+              
+              {/* Add new value input and button */}
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                <Input
+                  placeholder={`Add new ${attr.displayName.toLowerCase()}...`}
+                  style={{ 
+                    width: "200px", 
+                    height: "36px", 
+                    fontSize: "0.875rem",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "6px",
+                    padding: "0.5rem 0.75rem"
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.target.value.trim()) {
+                      addAttributeValue(attr.name, e.target.value.trim());
+                      e.target.value = "";
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={(e) => {
+                    const input = e.target.parentElement.querySelector("input");
+                    if (input && input.value.trim()) {
+                      addAttributeValue(attr.name, input.value.trim());
+                      input.value = "";
+                    }
+                  }}
+                  style={{
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "0.5rem 1rem",
+                    color: "white",
+                    fontSize: "0.875rem",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    transition: "all 0.2s ease",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = "translateY(-1px)";
+                    e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                  }}
+                >
+                  <Plus size={16} />
+                  Add
+                </Button>
+              </div>
+              
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                {attr.items.map((item) => {
+                  const isEditing = editingAttributeValues[`${attr.name}-${item}`];
+                  
+                  return (
+                    <span
+                      key={item}
+                      onClick={() => !isEditing && handleAttributeValueSelect(attr.name, item)}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        background: selectedAttributeValues[attr.name] === item ? "#a78bfa" : "#f3f3f3",
+                        color: selectedAttributeValues[attr.name] === item ? "#fff" : "#000",
+                        borderRadius: "8px",
+                        padding: "0.25rem 0.75rem",
+                        fontSize: "0.95rem",
+                        cursor: isEditing ? "default" : "pointer",
+                        border: selectedAttributeValues[attr.name] === item ? "2px solid #7c3aed" : "none",
+                        transition: "all 0.2s",
+                        marginRight: "0.5rem"
+                      }}
+                    >
+                      {isEditing ? (
+                        <>
+                          <input
+                            type="text"
+                            defaultValue={item}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "inherit",
+                              fontSize: "inherit",
+                              outline: "none",
+                              width: "80px",
+                              marginRight: "0.5rem"
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                saveEditedAttributeValue(attr.name, item, e.target.value);
+                              } else if (e.key === "Escape") {
+                                cancelEditingAttributeValue(attr.name, item);
+                              }
+                            }}
+                            onChange={(e) => {
+                              // Update the editing state with the new value
+                              setEditingAttributeValues(prev => ({
+                                ...prev,
+                                [`${attr.name}-${item}`]: e.target.value
+                              }));
+                            }}
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const currentValue = editingAttributeValues[`${attr.name}-${item}`] || item;
+                              saveEditedAttributeValue(attr.name, item, currentValue);
+                            }}
+                            style={{
+                              background: "#10b981",
+                              border: "none",
+                              borderRadius: "4px",
+                              padding: "0.2rem 0.4rem",
+                              marginLeft: "0.2rem",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center"
+                            }}
+                            title="Save"
+                          >
+                            <Check size={12} color="white" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => cancelEditingAttributeValue(attr.name, item)}
+                            style={{
+                              background: "#ef4444",
+                              border: "none",
+                              borderRadius: "4px",
+                              padding: "0.2rem 0.4rem",
+                              marginLeft: "0.2rem",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center"
+                            }}
+                            title="Cancel"
+                          >
+                            <X size={12} color="white" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {item}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditingAttributeValue(attr.name, item);
+                            }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              marginLeft: "0.3rem",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center"
+                            }}
+                            title={`Edit '${item}'`}
+                          >
+                            <Edit size={12} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (confirm(`Delete "${item}" from ${attr.displayName}?`)) {
+                                try {
+                                  // Delete from database first
+                                  const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                      'Content-Type': 'application/json'
+                                    }
+                                  });
+
+                                  if (response.ok) {
+                                    // Remove the item from the attribute
+                                    const updatedAttributes = attributes.map(attribute => {
+                                      if (attribute.name === attr.name) {
+                                        return {
+                                          ...attribute,
+                                          items: attribute.items.filter(i => i !== item)
+                                        };
+                                      }
+                                      return attribute;
+                                    });
+                                    setAttributes(updatedAttributes);
+                                    
+                                    // Also remove from selected values if it was selected
+                                    if (selectedAttributeValues[attr.name] === item) {
+                                      setSelectedAttributeValues(prev => {
+                                        const newValues = { ...prev };
+                                        delete newValues[attr.name];
+                                        return newValues;
+                                      });
+                                    }
+                                  } else {
+                                    alert('Failed to delete from database. Please try again.');
+                                  }
+                                } catch (error) {
+                                  console.error('Error deleting attribute value:', error);
+                                  alert('Error deleting attribute value. Please try again.');
+                                }
+                              }
+                            }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              marginLeft: "0.2rem",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center"
+                            }}
+                            title={`Delete '${item}'`}
+                          >
+                            <Trash2 size={12} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                          </button>
+                        </>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -1101,6 +1703,323 @@ export default function CategoryFilters({
                 )
               })}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* After main category selection UI, show selected category's image and attributes */}
+      {selectedMainCategory && categorySystem[selectedMainCategory] && (
+        <div className="mb-8 p-4 border rounded-lg bg-white flex flex-col items-start">
+          {/* Category Image */}
+          {categorySystem[selectedMainCategory].imageUrl && (
+            <img
+              src={categorySystem[selectedMainCategory].imageUrl}
+              alt={categorySystem[selectedMainCategory].name}
+              style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "8px", marginBottom: "1rem" }}
+            />
+          )}
+          <h2 className="text-xl font-bold mb-2">{categorySystem[selectedMainCategory].name}</h2>
+          {Array.isArray(categorySystem[selectedMainCategory].attributes) &&
+            categorySystem[selectedMainCategory].attributes.length > 0 ? (
+              categorySystem[selectedMainCategory].attributes.map((attr) => (
+                <div key={attr.name} style={{ marginBottom: "1.5rem" }}>
+                  <h3 style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>{attr.displayName}</h3>
+                  
+                  {/* Add new value input and button */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                    <Input
+                      placeholder={`Add new ${attr.displayName.toLowerCase()}...`}
+                      style={{ 
+                        width: "200px", 
+                        height: "36px", 
+                        fontSize: "0.875rem",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "6px",
+                        padding: "0.5rem 0.75rem"
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && e.target.value.trim()) {
+                          addAttributeValueToCategory(attr.name, e.target.value.trim());
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={(e) => {
+                        const input = e.target.parentElement.querySelector("input");
+                        if (input && input.value.trim()) {
+                          addAttributeValueToCategory(attr.name, input.value.trim());
+                          input.value = "";
+                        }
+                      }}
+                      style={{
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        border: "none",
+                        borderRadius: "6px",
+                        padding: "0.5rem 1rem",
+                        color: "white",
+                        fontSize: "0.875rem",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        transition: "all 0.2s ease",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.transform = "translateY(-1px)";
+                        e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.transform = "translateY(0)";
+                        e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                      }}
+                    >
+                      <Plus size={16} />
+                      Add
+                    </Button>
+                  </div>
+                  
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                    {attr.items.map((item) => {
+                      const isEditing = editingAttributeValues[`${attr.name}-${item}`];
+                      
+                      return (
+                        <span
+                          key={item}
+                          onClick={() => !isEditing && handleAttributeValueSelect(attr.name, item)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            background: selectedAttributeValues[attr.name] === item ? "#a78bfa" : "#f3f3f3",
+                            color: selectedAttributeValues[attr.name] === item ? "#fff" : "#000",
+                            borderRadius: "8px",
+                            padding: "0.25rem 0.75rem",
+                            fontSize: "0.95rem",
+                            cursor: isEditing ? "default" : "pointer",
+                            border: selectedAttributeValues[attr.name] === item ? "2px solid #7c3aed" : "none",
+                            transition: "all 0.2s",
+                            marginRight: "0.5rem"
+                          }}
+                        >
+                          {isEditing ? (
+                            <>
+                              <input
+                                type="text"
+                                defaultValue={item}
+                                style={{
+                                  background: "transparent",
+                                  border: "none",
+                                  color: "inherit",
+                                  fontSize: "inherit",
+                                  outline: "none",
+                                  width: "80px",
+                                  marginRight: "0.5rem"
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    saveEditedAttributeValue(attr.name, item, e.target.value);
+                                  } else if (e.key === "Escape") {
+                                    cancelEditingAttributeValue(attr.name, item);
+                                  }
+                                }}
+                                onChange={(e) => {
+                                  // Update the editing state with the new value
+                                  setEditingAttributeValues(prev => ({
+                                    ...prev,
+                                    [`${attr.name}-${item}`]: e.target.value
+                                  }));
+                                }}
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentValue = editingAttributeValues[`${attr.name}-${item}`] || item;
+                                  saveEditedAttributeValue(attr.name, item, currentValue);
+                                }}
+                                style={{
+                                  background: "#10b981",
+                                  border: "none",
+                                  borderRadius: "4px",
+                                  padding: "0.2rem 0.4rem",
+                                  marginLeft: "0.2rem",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center"
+                                }}
+                                title="Save"
+                              >
+                                <Check size={12} color="white" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => cancelEditingAttributeValue(attr.name, item)}
+                                style={{
+                                  background: "#ef4444",
+                                  border: "none",
+                                  borderRadius: "4px",
+                                  padding: "0.2rem 0.4rem",
+                                  marginLeft: "0.2rem",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center"
+                                }}
+                                title="Cancel"
+                              >
+                                <X size={12} color="white" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              {item}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  startEditingAttributeValue(attr.name, item);
+                                }}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  marginLeft: "0.3rem",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center"
+                                }}
+                                title={`Edit '${item}'`}
+                              >
+                                <Edit size={12} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Delete "${item}" from ${attr.displayName}?`)) {
+                                    try {
+                                      // Delete from database first
+                                      const response = await fetch(`http://localhost:5000/api/categories/${selectedMainCategory}/attributes/${attr.name}/items/${encodeURIComponent(item)}`, {
+                                        method: 'DELETE',
+                                        headers: {
+                                          'Content-Type': 'application/json'
+                                        }
+                                      });
+
+                                      if (response.ok) {
+                                        // Remove the item from the category system
+                                        const updatedCategorySystem = { ...categorySystem };
+                                        const category = updatedCategorySystem[selectedMainCategory];
+                                        if (category && category.attributes) {
+                                          const updatedAttributes = category.attributes.map(attribute => {
+                                            if (attribute.name === attr.name) {
+                                              return {
+                                                ...attribute,
+                                                items: attribute.items.filter(i => i !== item)
+                                              };
+                                            }
+                                            return attribute;
+                                          });
+                                          updatedCategorySystem[selectedMainCategory] = {
+                                            ...category,
+                                            attributes: updatedAttributes
+                                          };
+                                          setCategorySystem(updatedCategorySystem);
+                                          
+                                          // Also remove from selected values if it was selected
+                                          if (selectedAttributeValues[attr.name] === item) {
+                                            setSelectedAttributeValues(prev => {
+                                              const newValues = { ...prev };
+                                              delete newValues[attr.name];
+                                              return newValues;
+                                            });
+                                          }
+                                        }
+                                      } else {
+                                        alert('Failed to delete from database. Please try again.');
+                                      }
+                                    } catch (error) {
+                                      console.error('Error deleting attribute value:', error);
+                                      alert('Error deleting attribute value. Please try again.');
+                                    }
+                                  }
+                                }}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  marginLeft: "0.2rem",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center"
+                                }}
+                                title={`Delete '${item}'`}
+                              >
+                                <Trash2 size={12} color={selectedAttributeValues[attr.name] === item ? "#fff" : "#7c3aed"} />
+                              </button>
+                            </>
+                          )}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500">No attributes for this category.</p>
+            )}
+
+          {/* Show all selected attribute-value pairs and clear button */}
+          {Object.keys(selectedAttributeValues).length > 0 && (
+            <div style={{ marginTop: "1.5rem", width: "100%" }}>
+              <div style={{ marginBottom: "0.5rem" }}>
+                <strong>Selected Values:</strong>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                {Object.entries(selectedAttributeValues).map(([attr, value]) => (
+                  <span key={attr} style={{ background: "#ede9fe", borderRadius: "8px", padding: "0.25rem 0.75rem", fontWeight: 500 }}>
+                    {categorySystem[selectedMainCategory].attributes.find(a => a.name === attr)?.displayName || attr}: {value}
+                  </span>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedAttributeValues({})}
+                style={{ background: "#a78bfa", color: "#fff", border: "none", borderRadius: "6px", padding: "0.5rem 1.25rem", cursor: "pointer" }}
+              >
+                Clear All
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {showProducts && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Products</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {products.length === 0 ? (
+              <p>No products found.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {products.map(product => (
+                  <div key={product._id} className="border p-4 rounded">
+                    <img
+                      src={product.imageUrl || "/placeholder.svg"}
+                      alt={product.name}
+                      style={{ width: "100%", height: 150, objectFit: "cover" }}
+                    />
+                    <h3 className="font-bold mt-2">{product.name}</h3>
+                    <p>{product.description}</p>
+                    <p className="text-sm text-gray-500">Price: ${product.price}</p>
+                    {/* Add more product details as needed */}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
