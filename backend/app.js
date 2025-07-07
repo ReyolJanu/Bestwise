@@ -7,15 +7,25 @@ require("dotenv").config();
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+
 const eventRoutes = require('./routes/eventRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+
 
 const app = express();
 
 connectDB();
 
+const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+if (process.env.FRONT_URL) {
+  allowedOrigins.push(process.env.FRONT_URL);
+}
+
 app.use(cors({
-  origin: process.env.FRONT_URL || 'http://localhost:3000', // frontend URL
-  credentials: true
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -24,6 +34,12 @@ app.use(cookieParser());
 app.use('/api', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+
 app.use('/api', eventRoutes);
 
+app.use('/api/categories', categoryRoutes);
+
+
 module.exports = app;
+
+//hellow
