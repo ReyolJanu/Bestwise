@@ -11,6 +11,8 @@ import { FaUser } from "react-icons/fa";
 import { RiLockPasswordFill } from "react-icons/ri";
 import { updateUserProfile } from "../../slices/userSlice";
 import { IoCloseCircleOutline } from "react-icons/io5";
+import { useRef } from "react";
+import { fetchUserProfile } from '../../actions/userActions'; // import at the top
 
 export default function ProfilePage() {
   const { user } = useSelector(state => state.userState);
@@ -31,12 +33,21 @@ export default function ProfilePage() {
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [isAddMode, setIsAddMode] = useState(false);
 
+  const [profileImage, setProfileImage] = useState(""); // Only used for upload, not for display
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
     if (!user) {
       router.push("/login");
     } else {
       setPhone(user.phone || '');
       setAddress(user.address || '');
+      // No need to setProfileImage for display; always use user.profileImage
+      setSelectedFile(null);
+      setPreviewUrl("");
       setTimeout(() => setIsLoading(false), 800);
       fetchReminders();
     }
@@ -108,17 +119,83 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSaveChanges = async () => {
+  const handleProfileImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleUploadProfileImage = async () => {
+    if (!selectedFile) return;
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    setUploading(true);
+    try {
+      console.log('Uploading profile image...', selectedFile.name);
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/upload/single`, formData, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
+      console.log('Upload response:', res.data);
+      
+      // Store the uploaded image URL
+      const uploadedImageUrl = res.data.data.url;
+      setProfileImage(uploadedImageUrl);
+      
+      console.log('Saving profile with new image URL:', uploadedImageUrl);
+      
+      // Immediately save the profile with the new image
+      await handleSaveChanges(uploadedImageUrl);
+      
+      setSelectedFile(null);
+      setPreviewUrl("");
+      toast.success('Profile image uploaded and saved successfully!');
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleEditPhotoClick = () => {
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  const handleCancelImage = () => {
+    setSelectedFile(null);
+    setPreviewUrl("");
+  };
+
+  const handleSaveChanges = async (newProfileImage = null) => {
     setIsSaving(true);
     try {
+      // Use the new profile image if provided, otherwise use the current profileImage state or user's existing image
+      const imageToSave = newProfileImage || profileImage || user.profileImage || "";
+      
+      console.log('Saving profile changes:', { phone, address, profileImage: imageToSave });
+      
       const res = await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/updateprofile`,
-            { phone, address },
-            { withCredentials: true }
+        { phone, address, profileImage: imageToSave },
+        { withCredentials: true }
       );
-      dispatch(updateUserProfile(res.data.user));
+      
+      console.log('Profile update response:', res.data);
+      
+      // Update the Redux state with the new user data
+      if (res.data && res.data.user) {
+        dispatch(updateUserProfile(res.data.user));
+        console.log('Updated Redux state with new user data');
+      }
+      
+      // Reset the profile image state after successful save
+      setProfileImage("");
       toast.success("Profile updated successfully!");
     } catch (err) {
+      console.error('Profile update error:', err);
       const msg = err.response?.data?.message || "Failed to update profile.";
       toast.error(msg);
     } finally {
@@ -163,17 +240,51 @@ export default function ProfilePage() {
                 <div className="relative mb-4">
                   <span className="block w-36 h-36 rounded-full bg-gradient-to-tr from-purple-200 to-blue-200 p-1 shadow-lg">
                     <img
-                      src={user.avatar || "/default-avatar.png"}
+                      src={previewUrl || user?.profileImage || '/placeholder.svg'}
                       alt="Profile"
                       className="w-full h-full rounded-full object-cover border-4 border-white shadow-md"
+                      onError={(e) => {
+                        e.target.src = '/placeholder.svg';
+                      }}
                     />
                   </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleProfileImageChange}
+                  />
                   <button
                     className="absolute bottom-2 right-2 bg-white p-2 rounded-full border border-gray-200 shadow hover:bg-gray-50 transition-colors"
                     title="Change photo"
+                    onClick={handleEditPhotoClick}
+                    disabled={uploading}
                   >
                     <FiEdit2 className="w-5 h-5 text-gray-600" />
                   </button>
+                  {selectedFile && (
+                    <div className="absolute left-1/2 -bottom-16 transform -translate-x-1/2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-4 flex flex-col items-center z-10">
+                      <div className="mb-2 text-gray-700 font-medium">Preview</div>
+                      <img src={previewUrl} alt="Preview" className="w-24 h-24 rounded-full object-cover border mb-2" />
+                      <div className="flex gap-2">
+                        <button
+                          className="px-4 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm"
+                          onClick={handleUploadProfileImage}
+                          disabled={uploading}
+                        >
+                          {uploading ? 'Uploading...' : 'Upload'}
+                        </button>
+                        <button
+                          className="px-4 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors text-sm"
+                          onClick={handleCancelImage}
+                          disabled={uploading}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <h2 className="mt-2 text-2xl font-semibold text-gray-900">{user.firstName} {user.lastName}</h2>
                 <div className="mt-1 flex items-center text-sm text-gray-500">
@@ -250,7 +361,7 @@ export default function ProfilePage() {
                   <div className="flex justify-end">
                     <button
                       type="button"
-                      onClick={handleSaveChanges}
+                      onClick={() => handleSaveChanges()}
                       disabled={isSaving}
                       className="px-8 py-3 bg-purple-600 text-white text-base font-semibold rounded-lg shadow hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 transition-colors disabled:opacity-50"
                     >
