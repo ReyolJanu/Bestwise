@@ -10,6 +10,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const sendEmailRoutes = require('./routes/sendMailRotes');
 
 
 const app = express();
@@ -38,6 +39,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api', eventRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/Email', sendEmailRoutes);
 
 
 module.exports = app;

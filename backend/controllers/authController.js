@@ -111,6 +111,7 @@ exports.loginUser = async (req, res) => {
         address: user.address,
         zipCode: user.zipCode,
         profileImage: user.profileImage,
+        twoFactorEnabled:user.twoFactorEnabled
       }
     });
 

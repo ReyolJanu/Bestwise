@@ -38,9 +38,12 @@ function Page() {
       }));
 
       console.log('User role:', userData.role);
-
-      // Role-based redirection
-      if (userData.role === 'admin') {
+      console.log('User twoFactorEnabled?:', userData.twoFactorEnabled);
+      if(userData.twoFactorEnabled === false){
+        setErrorMsg('Your Registation got error please try again!')
+        setLoading(false);
+      }
+      else if (userData.role === 'admin') {
         router.push('/admin');
       } else if (userData.role === 'inventoryManager') {
         router.push('/inventory/dashboard');
