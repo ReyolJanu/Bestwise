@@ -9,6 +9,7 @@ import logo from '../../assets/logo.png';
 import { useRouter } from 'next/navigation';
 import Loader from '../components/loader/page';
 import Link from 'next/link';
+import {toast, Toaster } from 'sonner';
 
 function Page() {
   const dispatch = useDispatch();
@@ -40,7 +41,8 @@ function Page() {
       console.log('User role:', userData.role);
       console.log('User twoFactorEnabled?:', userData.twoFactorEnabled);
       if(userData.twoFactorEnabled === false){
-        setErrorMsg('Your Registation got error please try again!')
+        setErrorMsg('Your Two factor Registation is not complete your access denied!');
+        toast.error('Your Two factor Registation is not complete your access denied!');
         setLoading(false);
       }
       else if (userData.role === 'admin') {
@@ -124,6 +126,7 @@ function Page() {
           </div>
         </div>
       </form>
+      <Toaster position="top-center" richColors closeButton />
     </>
   );
 }

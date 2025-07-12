@@ -22,7 +22,7 @@ exports.Emailhandler = async function (req, res) {
     });
 
     const mailOptions = {
-      from: `"Your App Name" <${process.env.EMAIL}>`,
+      from: `"BEST WISHES" <${process.env.EMAIL}>`,
       to,
       subject,
       text,
