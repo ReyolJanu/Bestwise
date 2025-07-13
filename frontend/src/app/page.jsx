@@ -20,6 +20,7 @@ import Loader from "./components/loader/page"
 import { addToCart } from "./slices/cartSlice";
 import { addToWishlist } from "./slices/wishlistSlice";
 import { toast, Toaster } from 'sonner';
+import { useRouter } from "next/navigation";
 
 const images = ["/1.jpg", "/2.jpg", "/3.jpg"]
 
@@ -29,10 +30,58 @@ export default function FancyCarousel() {
   const dispatch = useDispatch()
     
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
+  const router = useRouter();
+
+  // Event data for Upcoming Events section
+  const events = [
+    {
+      name: "Father's Day",
+      key: "fathers-day",
+      image: "/fatherday.jpg", // Add this image to public if not present
+    },
+    {
+      name: "Mother's Day",
+      key: "mothers-day",
+      image: "/motherday.jpg",
+    },
+    {
+      name: "Birthday",
+      key: "birthday",
+      image: "/birthday-invitation.svg",
+    },
+    {
+      name: "Brother's Day",
+      key: "brothers-day",
+      image: "/profile-avatar.png", // Use a suitable image or add one
+    },
+    {
+      name: "Christmas",
+      key: "christmas",
+      image: "/christmas.jpg", // Add this image to public if not present
+    },
+    {
+      name: "New Year",
+      key: "newyear",
+      image: "/newyear.jpg", // Add this image to public if not present
+    },
+  ];
 
   useEffect(() => {
     dispatch(getProducts())
-    console.log("checkig",allProducts)
+    // Fetch categories from backend
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/categories");
+        const data = await res.json();
+        // If data is an array, use it directly; if wrapped in {data: []}, unwrap
+        const cats = Array.isArray(data) ? data : data.data;
+        setCategories(cats || []);
+      } catch (err) {
+        setCategories([]);
+      }
+    };
+    fetchCategories();
   }, [dispatch])
 
   // Helper function to get product image
@@ -77,18 +126,6 @@ export default function FancyCarousel() {
         "Schedule a surprise delivery for your loved ones at just the right moment. We'll handle the magic while you enjoy the reactions.",
     },
   ]
-
-  const categories = [
-    { name: "Balloons", image: "/balloon.svg?height=80&width=80" },
-    { name: "Mugs", image: "/mug.svg?height=80&width=80" },
-    { name: "Birthday Cards", image: "/birthday-invitation.svg?height=80&width=80" },
-    { name: "Home & Living", image: "/home.svg?height=80&width=80" },
-      // { name: "Sports", image: "/placeholder.svg?height=80&width=80" },
-      // { name: "Books", image: "/placeholder.svg?height=80&width=80" },
-      // { name: "Toys", image: "/placeholder.svg?height=80&width=80" },
-      // { name: "Beauty", image: "/placeholder.svg?height=80&width=80" },
-  ]
-
 
   const settings = {
     dots: true,
@@ -136,28 +173,50 @@ export default function FancyCarousel() {
         <section className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Categories</h2>
-            <Button variant="ghost" className="text-purple-600 hover:text-purple-700">
+            <Button variant="ghost" className="text-purple-600 hover:text-purple-700" onClick={() => router.push('/allProducts')}>
               Explore more <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
-            {categories.map((category, index) => (
-              <div key={index} className="flex flex-col items-center space-y-2 group cursor-pointer">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors">
-                  <Image
-                    src={category.image || "/placeholder.svg"}
-                    alt={category.name}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover"
-                  />
+            {categories && categories.length > 0 ? (
+              categories.map((category, index) => (
+                <div
+                  key={category._id || category.key || index}
+                  className="flex flex-col items-center space-y-2 group cursor-pointer"
+                  onClick={() => {
+                    router.push(`/allProducts/showcase/${category.key || category.name}`)
+                  }}
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors bg-white flex items-center justify-center">
+                    {category.icon ? (
+                      <span className="text-3xl">{category.icon}</span>
+                    ) : category.image ? (
+                      <Image
+                        src={category.image}
+                        alt={category.name}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src="/placeholder.svg"
+                        alt={category.name}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+                    {category.name}
+                  </span>
                 </div>
-                <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
-                  {category.name}
-                </span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="col-span-full text-center py-4 text-gray-400">No categories found.</div>
+            )}
           </div>
         </section>
 
@@ -176,34 +235,20 @@ export default function FancyCarousel() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {allProducts && allProducts.length > 0 ? (
               allProducts.slice(0, 6).map((product) => {
-                const imageSrc = getProductImage(product);
-                const isExternal = isExternalImage(imageSrc);
+                // const imageSrc = getProductImage(product);
+                // const isExternal = isExternalImage(imageSrc);
                 
                 return (
                   <Card key={product._id} className="group hover:shadow-lg transition-shadow">
                     <CardContent className="p-0">
                       <div className="relative">
-                        {isExternal ? (
-                          <img
-                            src={imageSrc}
-                            alt={product.name}
-                            className="w-full aspect-square object-cover rounded-t-lg"
-                            onError={(e) => {
-                              e.target.src = '/placeholder.svg';
-                            }}
-                          />
-                        ) : (
-                          <Image
-                            src={imageSrc}
-                            alt={product.name}
-                            width={200}
-                            height={200}
-                            className="w-full aspect-square object-cover rounded-t-lg"
-                            onError={(e) => {
-                              e.target.src = '/placeholder.svg';
-                            }}
-                          />
-                        )}
+                        <Image
+                          src="/placeholder.svg"
+                          alt={product.name}
+                          width={200}
+                          height={200}
+                          className="w-full aspect-square object-cover rounded-t-lg"
+                        />
                         <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
                           <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
                         </div>
@@ -275,17 +320,26 @@ export default function FancyCarousel() {
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Upcoming Events</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="overflow-hidden group hover:shadow-lg transition-shadow">
-              <CardContent className="p-0">
-                <div className="relative h-48 sm:h-56">
-                  <Image src="/motherday.jpg" alt="Mother's day" fill className="object-cover" />
-                  <div className="absolute bottom-0 right-0 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-tl-2xl">
-                    <span className="font-medium text-gray-900">Mother's Day</span>
+          <div
+            className="flex flex-row gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 sm:overflow-visible sm:mx-0 sm:px-0"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            {events.map((event) => (
+              <Card
+                key={event.key}
+                className="min-w-[220px] max-w-[90vw] sm:min-w-0 sm:max-w-none overflow-hidden group hover:shadow-lg transition-shadow cursor-pointer flex-shrink-0"
+                onClick={() => router.push(`/allProducts/showcase/${event.key}`)}
+              >
+                <CardContent className="p-0">
+                  <div className="relative h-48 sm:h-56 flex items-center justify-center bg-gray-100">
+                    {/* Removed Image rendering */}
+                    <div className="absolute bottom-0 right-0 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-tl-2xl">
+                      <span className="font-medium text-gray-900">{event.name}</span>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </section>
 
@@ -297,34 +351,20 @@ export default function FancyCarousel() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 ">
             {allProducts && allProducts.length > 0 ? (
               allProducts.slice(0, 12).map((product) => {
-                const imageSrc = getProductImage(product);
-                const isExternal = isExternalImage(imageSrc);
+                // const imageSrc = getProductImage(product);
+                // const isExternal = isExternalImage(imageSrc);
                 
                 return (
                   <Link key={product._id} href={`/productDetail/${product._id}`} className="block">
                     <CardContent className="p-0 border-1 border-[#D9D9D9] rounded-[10px]">
                       <div className="relative">
-                        {isExternal ? (
-                          <img
-                            src={imageSrc}
-                            alt={product.name}
-                            className="w-full aspect-square object-cover rounded-t-lg"
-                            onError={(e) => {
-                              e.target.src = '/placeholder.svg';
-                            }}
-                          />
-                        ) : (
-                          <Image
-                            src={imageSrc}
-                            alt={product.name}
-                            width={200}
-                            height={200}
-                            className="w-full aspect-square object-cover rounded-t-lg"
-                            onError={(e) => {
-                              e.target.src = '/placeholder.svg';
-                            }}
-                          />
-                        )}
+                        <Image
+                          src={product.images[0].url || "/placeholder.svg"}
+                          alt={product.name}
+                          width={200}
+                          height={200}
+                          className="w-full aspect-square object-cover rounded-t-lg"
+                        />
                         <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
                           <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
                         </div>
