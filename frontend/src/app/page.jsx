@@ -32,8 +32,53 @@ export default function FancyCarousel() {
   const dispatch = useDispatch()
     
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
+  const router = useRouter();
+
+  // Event data for Upcoming Events section
+  const events = [
+    {
+      name: "Father's Day",
+      key: "fathers-day",
+      image: "/fatherday.jpg", // Add this image to public if not present
+    },
+    {
+      name: "Mother's Day",
+      key: "mothers-day",
+      image: "/motherday.jpg",
+    },
+    {
+      name: "Birthday",
+      key: "birthday",
+      image: "/birthday-invitation.svg",
+    },
+    {
+      name: "Brother's Day",
+      key: "brothers-day",
+      image: "/profile-avatar.png", // Use a suitable image or add one
+    },
+    {
+      name: "Christmas",
+      key: "christmas",
+      image: "/christmas.jpg", // Add this image to public if not present
+    },
+    {
+      name: "New Year",
+      key: "newyear",
+      image: "/newyear.jpg", // Add this image to public if not present
+    },
+  ];
 
   const [showMoreCategories, setShowMoreCategories] = useState(false);
+
+
+  useEffect(() => {
+    dispatch(getProducts())
+
+    dispatch(getCategories())
+    console.log("checkig",allProducts)
+
+  const [categories, setCategories] = useState([]);
 
   const router = useRouter();
 
@@ -73,8 +118,24 @@ export default function FancyCarousel() {
 
   useEffect(() => {
     dispatch(getProducts())
+
+    // Fetch categories from backend
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/categories");
+        const data = await res.json();
+        // If data is an array, use it directly; if wrapped in {data: []}, unwrap
+        const cats = Array.isArray(data) ? data : data.data;
+        setCategories(cats || []);
+      } catch (err) {
+        setCategories([]);
+      }
+    };
+    fetchCategories();
+
     dispatch(getCategories())
     console.log("checking", allProducts)
+
   }, [dispatch])
 
   // Helper function to get product image
@@ -206,6 +267,7 @@ export default function FancyCarousel() {
 
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
             {categories && categories.length > 0 ? (
+
               categories.slice(0, showMoreCategories ? categories.length : 6).map((category, index) => (
                 <div 
                   key={category._id || index} 
@@ -222,11 +284,46 @@ export default function FancyCarousel() {
                     />
                   </div>
                   <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors font-medium">
+
+              categories.map((category, index) => (
+                <div
+                  key={category._id || category.key || index}
+                  className="flex flex-col items-center space-y-2 group cursor-pointer"
+                  onClick={() => {
+                    router.push(`/allProducts/showcase/${category.key || category.name}`)
+                  }}
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-200 overflow-hidden group-hover:border-purple-400 transition-colors bg-white flex items-center justify-center">
+                    {category.icon ? (
+                      <span className="text-3xl">{category.icon}</span>
+                    ) : category.image ? (
+                      <Image
+                        src={category.image}
+                        alt={category.name}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src="/placeholder.svg"
+                        alt={category.name}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <span className="text-xs sm:text-sm text-center text-gray-700 group-hover:text-purple-600 transition-colors">
+
                     {category.name}
                   </span>
                 </div>
               ))
             ) : (
+
+              <div className="col-span-full text-center py-4 text-gray-400">No categories found.</div>
+
               // Fallback categories if database is empty
               [
                 { name: "Balloons", image: "/balloon.svg" },
@@ -257,6 +354,11 @@ export default function FancyCarousel() {
                   </span>
                 </div>
               ))
+
+
+              <div className="col-span-full text-center py-4 text-gray-400">No categories found.</div>
+
+
             )}
           </div>
         </section>
