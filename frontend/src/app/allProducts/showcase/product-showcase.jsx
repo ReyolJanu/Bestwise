@@ -161,7 +161,18 @@ export function ProductShowcase({ filtered }) {
           className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
         >
           <div className="relative h-48">
-            <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-contain p-4" />
+            <Image 
+              src={
+                product.images && product.images.length > 0
+                  ? (typeof product.images[0] === 'object' && product.images[0].url 
+                      ? product.images[0].url 
+                      : product.images[0])
+                  : "/placeholder.svg"
+              } 
+              alt={product.name} 
+              fill 
+              className="object-contain p-4" 
+            />
 
             {/* Improved discount tag design */}
             {product.discount > 0 && (
