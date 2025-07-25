@@ -2,7 +2,16 @@
 
 const GiftContribution = require('../models/GiftContribution');
 const mongoose = require('mongoose');
-const Emailhandler = require('../utils/sendEmail');
+const nodemailer = require('nodemailer');
+require('dotenv').config();
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_APP_PASSWORD,
+  },
+});
 
 
 
@@ -12,7 +21,7 @@ const createContribution = async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized: User not found in request' });
     }
 
-    const { productId, productName, productPrice, participants } = req.body;
+    const { productId, productName, productPrice, participants, share } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(productId)) {
       return res.status(400).json({ message: 'Invalid productId' });
@@ -34,6 +43,7 @@ const createContribution = async (req, res) => {
       product: productId,
       productName,
       productPrice,
+      share,
       createdBy: req.user._id,
       participants: participants.map(email => ({ email: email.trim().toLowerCase() })),
       deadline,
@@ -41,19 +51,68 @@ const createContribution = async (req, res) => {
 
     // Send Email Invitations
     for (const email of participants) {
-      await Emailhandler({
-        to: email,
-        subject: `🎁 You're Invited to Contribute a Gift!`,
-        html: `
-          <h2>Hello 👋</h2>
-          <p>You’ve been invited to contribute towards <strong>${productName}</strong> (Rs. ${productPrice})</p>
-          <p>Deadline: <strong>${deadline.toDateString()}</strong></p>
-          <p>Click the link below to contribute or decline:</p>
-          <a href="http://localhost:3000/contribution/${contribution._id}">View & Respond</a>
-          <br><br>
-          <p>From, <br/> Best Wishes Team 💜</p>
-        `
-      });
+      await transporter.sendMail({
+  from: `"BEST WISHES" <${process.env.EMAIL}>`,
+  to: email,
+  subject: `🎁 You're Invited to Contribute a Gift!`,
+  html: `
+   <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Gift Invitation</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #f9f9f9;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 0;">
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 30px;">
+              <tr>
+                <td align="center">
+                  <h2 style="color: #6B46C1; margin: 0 0 20px;">🎁 Collaborative Gift Invitation</h2>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-size: 16px; color: #333;">
+                  <p style="margin: 0 0 10px;">Hi there 👋,</p>
+                  <p style="margin: 0 0 10px;">You’ve been invited to contribute towards a special gift:</p>
+                  <p style="margin: 0 0 10px;"><strong>${productName}</strong></p>
+                  <p style="margin: 0 0 10px;">Amount: <strong>Rs. ${share}</strong></p>
+                  <p style="margin: 0 0 20px;">Deadline: <strong>${deadline.toDateString()}</strong></p>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="padding: 20px 0;">
+                  <a href="http://localhost:3000/contribution/${contribution._id}"
+                     style="background-color: #6B46C1; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; display: inline-block;">
+                    🎁 Contribute Now
+                  </a>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-size: 14px; color: #555; padding-top: 10px;">
+                  <p style="margin: 0;">If you're unable to contribute at this time, you can still view the invitation and decline gracefully. We appreciate your time!</p>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="padding: 30px 0 0;">
+                  <hr style="border: none; border-top: 1px solid #eee; width: 100%;" />
+                  <p style="color: #999; font-size: 12px; margin-top: 20px;">
+                    💜 Best Wishes Team<br/>
+                    <a href="http://localhost:3000" style="color: #6B46C1; text-decoration: none;">Visit Our Platform</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>
+  `
+});
+
     }
 
     res.status(201).json({ success: true, contribution });
@@ -64,9 +123,6 @@ const createContribution = async (req, res) => {
   }
 };
 
-
-// Other controller functions unchanged (getContribution, markPaid, etc.)
-// Just keep the same as you have.
 
 const getContribution = async (req, res) => {
   try {

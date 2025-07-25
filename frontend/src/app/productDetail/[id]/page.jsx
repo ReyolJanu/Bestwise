@@ -17,6 +17,9 @@ import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
 import axios from 'axios';
 import { toast, Toaster } from 'sonner';
 import CollaborativeGiftModal from '../../modal/CollaborativeGiftModal/page';
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import Footer from "../../components/footer/page"
 
 function ProductDetailPage() {
   const { id } = useParams();
@@ -132,12 +135,12 @@ function ProductDetailPage() {
   };
 
   return (
-
+<>
     <div className='w-full justify-center flex-co px-4 sm:px-8 md:px-16 lg:px-24'>  <Navbar />
       <div className='w-full flex flex-col lg:flex-row h-auto mt-[20px]'>
         {/* Left Section - Image & Description */}
         <div className='flex-col justify-center w-full lg:w-[60%]'>
-          <div className='w-full h-[300px] sm:h-[400px] md:h-[500px] bg-gray-300 rounded-[10px] overflow-hidden'>
+          <div className='w-full h-[300px] sm:h-[400px] md:h-[500px] bg-gray-300 rounded-[10px] overflow-hidden border-1 border-[#D9D9D9]/50'>
             <img
               src={getMainImage()}
               alt={product.name}
@@ -244,7 +247,7 @@ function ProductDetailPage() {
       </div>
 
       {/* all Products */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-8 md:mt-[100px]">
+      {/* <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-8 md:mt-[100px]">
         {allProducts && allProducts.length > 0 ? (
           allProducts.slice(0, 9).map((product) => {
             const getProductImage = () => {
@@ -312,7 +315,77 @@ function ProductDetailPage() {
         ) : (
           <p className="text-red-500">Server currently busy!</p>
         )}
-      </div>
+      </div> */}
+
+      <div className="mt-[50px] grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 ">
+            {allProducts && allProducts.length > 0 ? (
+              allProducts.slice(0, 12).map((product) => (
+                <Link key={product._id} href={`/productDetail/${product._id}`} className="block">
+                  <CardContent className="p-0 border-1 border-[#D9D9D9]/50 rounded-[10px]">
+                    <div className="relative">
+                      <Image
+                        src={product.images[0].url || "/placeholder.svg"}
+                        alt={product.name}
+                        width={200}
+                        height={200}
+                        className="w-full aspect-square object-cover rounded-t-lg"
+                      />
+                      <div className="absolute top-2 left-2 bg-red-100 rounded-full p-1">
+                        <Flame className="text-red-500 w-3 h-3 sm:w-4 sm:h-4" />
+                      </div>
+                      <div className="absolute top-2 right-2 bg-purple-100 rounded-full p-1 cursor-pointer hover:bg-purple-200 transition-colors"
+                        onClick={e => {
+                          e.preventDefault();
+                          if (!isAuthenticated) return alert('Please login to add to wishlist');
+                          dispatch(addToWishlist(product));
+                          toast.success('Added to wishlist!');
+                        }}
+                      >
+                        <Heart className="text-purple-500 w-3 h-3 sm:w-4 sm:h-4" />
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <h3 className="font-medium text-sm sm:text-base truncate">{product.name}</h3>
+                      <p className="font-semibold text-purple-600 text-sm sm:text-base">US ${product.price || product.retailPrice}</p>
+                      <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
+                        <div className="flex text-yellow-400 text-xs sm:text-sm mt-1">
+                          {Array.from({ length: 5 }, (_, i) => {
+                            const fullStars = Math.floor(product.rating || 0);
+                            const hasHalfStar = (product.rating || 0) - fullStars >= 0.5;
+                            if (i < fullStars) {
+                              return <AiFillStar key={i} />;
+                            } else if (i === fullStars && hasHalfStar) {
+                              return <AiTwotoneStar key={i} />;
+                            } else {
+                              return <AiOutlineStar key={i} />;
+                            }
+                          })}
+                        </div>
+                      </div>
+                      <Button
+                        className="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white"
+                        onClick={e => {
+                          e.preventDefault();
+                          if (!isAuthenticated) return alert('Please login to add to cart');
+                          dispatch(addToCart({ product, quantity: 1 }));
+                          toast.success('Added to cart!');
+                        }}
+                      >
+                        Add to Cart
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-red-500 text-lg">Server currently busy!</p>
+              </div>
+            )}
+          </div>
+
+
+      
       <CollaborativeGiftModal
         isOpen={isCollaborativeModalOpen}
         onClose={closeCollaborativeModal}
@@ -323,7 +396,10 @@ function ProductDetailPage() {
       />
 
       <Toaster position="top-center" richColors closeButton />
+
     </div>
+     <Footer />
+     </>
   );
 }
 
