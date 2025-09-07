@@ -1,4 +1,7 @@
+
 const EventReminder = require('../models/EventReminder');
+const User = require('../models/User');
+const sendReminderEmail = require('../utils/reminderMail');
 
 exports.createReminder = async (req, res) => {
   try {
@@ -13,6 +16,9 @@ exports.createReminder = async (req, res) => {
       event,
       time
     });
+
+
+
     res.status(201).json({ success: true, message: 'Reminder Set Successfully', reminder });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Something went wrong', error: err.message });

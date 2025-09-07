@@ -1,5 +1,4 @@
 const EventReminder = require('../models/EventReminder');
-const User = require('../models/User');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
@@ -13,12 +12,13 @@ const transporter = nodemailer.createTransport({
 
 async function checkAndSendReminders() {
   const now = new Date();
-  const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
   const currentTime = now.toTimeString().slice(0, 5);  // HH:MM
 
   try {
     const reminders = await EventReminder.find({
-      date: currentDate,
+      date: { $gte: startOfDay, $lte: endOfDay },
       time: currentTime,
       sent: { $ne: true },
     }).populate('user');

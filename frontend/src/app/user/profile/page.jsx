@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
-import { FiMail, FiPhone, FiMapPin, FiShoppingBag, FiLogOut, FiEdit2, FiUser, FiEye, FiEyeOff, FiClock } from "react-icons/fi";
+import { FiMail, FiPhone, FiMapPin, FiShoppingBag, FiLogOut, FiEdit2, FiUser, FiEye, FiEyeOff, FiClock, FiGift } from "react-icons/fi";
 import Navbar from "@/app/components/navbar/page";
 import axios from "axios";
 import { toast, Toaster } from 'sonner';
@@ -39,6 +39,14 @@ export default function ProfilePage() {
   const [previewUrl, setPreviewUrl] = useState("");
   const fileInputRef = useRef(null);
 
+  // Add at the top, after other state declarations
+  const [contributions, setContributions] = useState([]);
+  const [contributionsLoading, setContributionsLoading] = useState(false);
+
+  // Add modal state
+  const [selectedContribution, setSelectedContribution] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
   useEffect(() => {
     if (!user) {
       router.push("/login");
@@ -52,6 +60,23 @@ export default function ProfilePage() {
       fetchReminders();
     }
   }, [user, router]);
+
+  // Fetch user contributions
+  useEffect(() => {
+    if (!user) return;
+    const fetchContributions = async () => {
+      setContributionsLoading(true);
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/gift`, { withCredentials: true });
+        setContributions(res.data || []);
+      } catch (err) {
+        setContributions([]);
+      } finally {
+        setContributionsLoading(false);
+      }
+    };
+    fetchContributions();
+  }, [user]);
 
   const fetchReminders = async () => {
     setReminderLoading(true);
@@ -209,6 +234,15 @@ export default function ProfilePage() {
     setEditFields({ remindermsg: '', date: '', time: '', event: '' });
   };
 
+  const openContributionModal = (contribution) => {
+    setSelectedContribution(contribution);
+    setShowModal(true);
+  };
+  const closeContributionModal = () => {
+    setShowModal(false);
+    setSelectedContribution(null);
+  };
+
   if (!user) return null;
 
   if (isLoading) {
@@ -317,7 +351,7 @@ export default function ProfilePage() {
 
             {/* Right Column - Information */}
             <section className="lg:col-span-2 space-y-10">
-              {/* Personal Information */}
+              {/* 1. Personal Information */}
               <div className="bg-white rounded-md border" style={{ borderColor: 'rgba(217,217,217,0.5)' }}>
                 <div className="flex items-center gap-3 px-8 py-5 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
                   <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-purple-100 to-blue-100">
@@ -371,20 +405,7 @@ export default function ProfilePage() {
                 </form>
               </div>
 
-              {/* Password Change Section */}
-              <div className="bg-white rounded-md border" style={{ borderColor: 'rgba(217,217,217,0.5)' }}>
-                <div className="flex items-center gap-3 px-8 py-5 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
-                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-pink-100 to-yellow-100">
-                    <RiLockPasswordFill  className="w-5 h-5 text-pink-600" />
-                  </span>
-                  <h3 className="text-xl font-semibold text-gray-900 tracking-tight">Change Password</h3>
-                </div>
-                <div className="p-8">
-                  <PasswordChangeForm />
-                </div>
-              </div>
-
-              {/* Order Summary */}
+              {/* 2. Order Summary */}
               <div className="bg-white rounded-md border" style={{ borderColor: 'rgba(217,217,217,0.5)' }}>
                 <div className="flex items-center gap-3 px-8 py-5 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
                   <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-green-100 to-blue-100">
@@ -414,7 +435,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Reminder History */}
+              {/* 3. Reminder History */}
               <div className="bg-white rounded-md border" style={{ borderColor: 'rgba(217,217,217,0.5)' }}>
                 <div className="flex items-center gap-3 px-8 py-5 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
                   <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-100 to-purple-100">
@@ -441,6 +462,14 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <ul className="space-y-4">
+                      <div className="flex justify-end mb-4">
+                        <button
+                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                          onClick={openAddModal}
+                        >
+                          Add Reminder
+                        </button>
+                      </div>
                       {reminders.map(reminder => (
                         <li key={reminder._id} className="flex flex-col md:flex-row md:items-center md:justify-between bg-gray-50 rounded-lg p-4 border border-gray-100">
                           <div>
@@ -470,86 +499,195 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Edit Reminder Modal */}
-              {(editReminder || isAddMode) && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-                  <div className="bg-white rounded-md p-8 w-full max-w-md relative" style={{ border: '1px solid rgba(217,217,217,0.5)' }}>
-                    <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500" onClick={closeEditModal}>
-                      <IoCloseCircleOutline  className="w-6 h-6" />
-                    </button>
-                    <h3 className="text-lg font-semibold mb-4">{isAddMode ? 'Set Reminder' : 'Edit Reminder'}</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                        <textarea
-                          name="remindermsg"
-                          value={editFields.remindermsg}
-                          onChange={handleEditChange}
-                          className="w-full border border-gray-200 rounded-lg p-2"
-                          rows={3}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                        <input
-                          name="date"
-                          type="date"
-                          value={editFields.date}
-                          onChange={handleEditChange}
-                          className="w-full border border-gray-200 rounded-lg p-2"
-                          min={new Date().toISOString().split('T')[0]}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-                        <input
-                          name="time"
-                          type="time"
-                          value={editFields.time}
-                          onChange={handleEditChange}
-                          className="w-full border border-gray-200 rounded-lg p-2"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Event</label>
-                        <select
-                          name="event"
-                          value={editFields.event}
-                          onChange={handleEditChange}
-                          className="w-full border border-gray-200 rounded-lg p-2"
-                        >
-                          <option value="">Select Event</option>
-                          <option value="Birthday">Birthday</option>
-                          <option value="Fathers Day">Father's Day</option>
-                          <option value="Mothers Day">Mother's Day</option>
-                          <option value="Brothers Day">Brother's Day</option>
-                          <option value="Christmas">Christmas</option>
-                          <option value="Key Birthday">Key Birthday</option>
-                          <option value="New Year">New Year</option>
-                          <option value="Others">Others</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2 mt-6">
-                      <button
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
-                        onClick={closeEditModal}
-                        disabled={editSaving}
-                      >Cancel</button>
-                      <button
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                        onClick={handleEditSave}
-                        disabled={editSaving}
-                      >{editSaving ? (isAddMode ? 'Creating...' : 'Saving...') : (isAddMode ? 'Create' : 'Save')}</button>
-                    </div>
-                  </div>
+              {/* 4. Gift Contributions */}
+              <div className="bg-white rounded-md border" style={{ borderColor: 'rgba(217,217,217,0.5)' }}>
+                <div className="flex items-center gap-3 px-8 py-5 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
+                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-purple-100 to-pink-100">
+                    <FiGift className="w-5 h-5 text-purple-600" />
+                  </span>
+                  <h3 className="text-xl font-semibold text-gray-900 tracking-tight">Gift Contributions</h3>
                 </div>
-              )}
+                <div className="p-8">
+                  {contributionsLoading ? (
+                    <div className="text-center text-gray-500">Loading contributions...</div>
+                  ) : contributions.length === 0 ? (
+                    <div className="text-center">
+                      <p className="text-gray-500 mb-4">You have not participated in any collaborative gifts yet.</p>
+                      <a
+                        href="/allProducts"
+                        className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                      >
+                        Start a Contribution
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {contributions.map((c) => {
+                        const product = c.product || {};
+                        const productImage = product.images && product.images.length > 0 ? (product.images[0].url || product.images[0]) : null;
+                        return (
+                          <div key={c._id} className="bg-white rounded-xl p-4 flex flex-col items-center shadow-sm border border-gray-100">
+                            {productImage ? (
+                              <img src={productImage} alt={product.name || c.productName} className="w-24 h-24 object-cover rounded-lg border mb-3" />
+                            ) : (
+                              <div className="w-24 h-24 bg-gray-100 flex items-center justify-center rounded-lg border text-gray-400 mb-3">No Image</div>
+                            )}
+                            <h4 className="text-base font-semibold text-purple-800 mb-1 text-center">{product.name || c.productName}</h4>
+                            <p className="text-gray-700 text-sm mb-1">Price: <span className="font-medium">Rs. {c.productPrice || product.salePrice || product.retailPrice}</span></p>
+                            <p className="text-gray-500 text-xs mb-2">Deadline: {new Date(c.deadline).toLocaleDateString()}</p>
+                            <button
+                              onClick={() => openContributionModal(c)}
+                              className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors w-full"
+                            >
+                              View
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 5. Change Password */}
+              <div className="bg-white rounded-md border" style={{ borderColor: 'rgba(217,217,217,0.5)' }}>
+                <div className="flex items-center gap-3 px-8 py-5 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
+                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-pink-100 to-yellow-100">
+                    <RiLockPasswordFill  className="w-5 h-5 text-pink-600" />
+                  </span>
+                  <h3 className="text-xl font-semibold text-gray-900 tracking-tight">Change Password</h3>
+                </div>
+                <div className="p-8">
+                  <PasswordChangeForm />
+                </div>
+              </div>
             </section>
           </div>
         </main>
         <Toaster position="top-center" richColors closeButton />
       </div>
+
+      {/* Edit/Add Reminder Modal */}
+      {(editReminder !== null || isAddMode) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
+            <button
+              onClick={closeEditModal}
+              className="absolute top-3 right-3 text-gray-400 hover:text-black"
+              aria-label="Close"
+            >
+              <IoCloseCircleOutline size={24} />
+            </button>
+            <h3 className="text-lg font-semibold mb-4">{isAddMode ? 'Add Reminder' : 'Edit Reminder'}</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm mb-1">Event</label>
+                <input
+                  name="event"
+                  value={editFields.event}
+                  onChange={handleEditChange}
+                  className="w-full px-3 py-2 border rounded"
+                  placeholder="e.g., Birthday"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Message</label>
+                <input
+                  name="remindermsg"
+                  value={editFields.remindermsg}
+                  onChange={handleEditChange}
+                  className="w-full px-3 py-2 border rounded"
+                  placeholder="Reminder message"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm mb-1">Date</label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={editFields.date}
+                    onChange={handleEditChange}
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1">Time</label>
+                  <input
+                    type="time"
+                    name="time"
+                    value={editFields.time}
+                    onChange={handleEditChange}
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={closeEditModal} className="px-4 py-2 rounded border">Cancel</button>
+                <button
+                  onClick={handleEditSave}
+                  disabled={editSaving}
+                  className="px-4 py-2 rounded bg-purple-600 text-white hover:bg-purple-700"
+                >
+                  {editSaving ? 'Saving...' : (isAddMode ? 'Create' : 'Save')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contribution Details Modal */}
+      {showModal && selectedContribution && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 relative">
+            <button
+              onClick={closeContributionModal}
+              className="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl"
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-bold text-purple-700 mb-4 text-center">🎁 Gift Contribution Details</h2>
+            <div className="flex flex-col items-center mb-4">
+              {selectedContribution.product && selectedContribution.product.images && selectedContribution.product.images.length > 0 ? (
+                <img src={selectedContribution.product.images[0].url || selectedContribution.product.images[0]} alt={selectedContribution.product.name || selectedContribution.productName} className="w-28 h-28 object-cover rounded-lg border mb-2" />
+              ) : (
+                <div className="w-28 h-28 bg-gray-100 flex items-center justify-center rounded-lg border text-gray-400 mb-2">No Image</div>
+              )}
+              <h3 className="text-lg font-semibold text-purple-800 mb-1 text-center">{selectedContribution.product?.name || selectedContribution.productName}</h3>
+              <p className="text-gray-700 text-sm mb-1">Price: <span className="font-medium">Rs. {selectedContribution.productPrice || selectedContribution.product?.salePrice || selectedContribution.product?.retailPrice}</span></p>
+              <p className="text-gray-500 text-xs mb-2">Deadline: {new Date(selectedContribution.deadline).toLocaleDateString()}</p>
+            </div>
+            <div className="mb-3">
+              <h4 className="font-semibold text-gray-800 mb-1">Participants</h4>
+              <ul className="list-disc pl-6 text-sm">
+                {selectedContribution.participants.map((p, idx) => (
+                  <li key={idx} className="mb-1">
+                    {p.email} {p.hasPaid ? <span className="text-green-600">(Paid)</span> : p.declined ? <span className="text-red-500">(Declined)</span> : <span className="text-yellow-600">(Pending)</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="mb-3">
+              <h4 className="font-semibold text-gray-800 mb-1">Status</h4>
+              <p className="capitalize text-sm">{selectedContribution.status}</p>
+            </div>
+            <div className="flex mt-4 justify-center">
+              {selectedContribution.product?._id && (
+                <a
+                  href={`/productDetail/${selectedContribution.product._id}`}
+                  target="_self"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center px-4 py-2 border border-purple-600 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-50 transition-colors"
+                >
+                  View Product
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

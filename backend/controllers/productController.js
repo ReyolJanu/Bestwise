@@ -204,7 +204,7 @@ exports.createProduct = async (req, res) => {
 
     res.status(201).json({ success: true, message: "Product created", data: product });
   } catch (error) {
-    console.error("❌ Error in createProduct:", error.message);
+    console.error(" Error in createProduct:", error.message);
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
@@ -219,9 +219,9 @@ exports.updateProduct = async (req, res) => {
     if (!product)
       return res.status(404).json({ success: false, message: "Product not found" });
 
-    console.log("🔄 Updating product:", req.params.id);
-    console.log("📦 Request body:", req.body);
-    console.log("🔍 Category and Filters in request:", {
+    console.log(" Updating product:", req.params.id);
+    console.log(" Request body:", req.body);
+    console.log(" Category and Filters in request:", {
       mainCategory: req.body.mainCategory,
       filters: req.body.filters,
       filtersKeys: Object.keys(req.body.filters || {}),
@@ -229,17 +229,17 @@ exports.updateProduct = async (req, res) => {
     });
 
     const update = { ...req.body, sku: req.body.sku.toUpperCase() };
-    console.log("📝 Final update object:", update);
+    console.log(" Final update object:", update);
     
     const updated = await Product.findByIdAndUpdate(req.params.id, update, {
       new: true,
       runValidators: true,
     });
 
-    console.log("✅ Updated product:", updated);
+    console.log(" Updated product:", updated);
     res.json({ success: true, message: "Product updated", data: updated });
   } catch (error) {
-    console.error("❌ Error updating product:", error);
+    console.error(" Error updating product:", error);
     res.status(500).json({
       success: false,
       message: "Error updating product",

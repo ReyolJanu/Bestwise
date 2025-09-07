@@ -1,3 +1,4 @@
+
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -12,7 +13,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const sendEmailRoutes = require('./routes/sendMailRotes');
 const giftContributionRoutes = require('./routes/giftContributionRoutes');
-
+const paymentRoutes = require('./routes/paymentRoutes');
 
 
 const app = express();
@@ -37,6 +38,7 @@ app.use(cookieParser());
 app.use('/api', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.use('/api', eventRoutes);
 app.use('/api/categories', categoryRoutes);

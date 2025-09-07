@@ -39,6 +39,10 @@ const GiftContributionSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  share: {
+    type: Number,
+    required: true,
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

@@ -70,6 +70,7 @@ export default function CollaborativeGiftModal({
           productId,
           productName,
           productPrice,
+          share,
           participants: emails.map(e => e.trim()).filter(e => e)
         }, {
           withCredentials: true
