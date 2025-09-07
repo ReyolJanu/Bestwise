@@ -9,6 +9,7 @@ import { SiMastercard } from "react-icons/si";
 import { FiShoppingCart } from "react-icons/fi";
 import Footer from '../../components/footer/page'
 import { useSelector, useDispatch } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { removeFromCart, increaseQuantity, decreaseQuantity } from '../../slices/cartSlice';
 import { AiFillStar, AiOutlineStar, AiTwotoneStar } from 'react-icons/ai';
 import { toast, Toaster } from 'sonner';
@@ -17,6 +18,7 @@ export default function CheckoutPage() {
     const cart = useSelector((state) => state.cartState.items);
     const {user} = useSelector((state) => state.userState);
     const dispatch = useDispatch();
+    const router = useRouter();
 
     const handleRemove = (id) => {
         dispatch(removeFromCart(id));
@@ -42,6 +44,14 @@ export default function CheckoutPage() {
         return product.images[0];
       }
       return '/placeholder.svg';
+    };
+
+    const handleCheckout = () => {
+        if (!user) {
+            toast.error('Please login to continue');
+            return;
+        }
+        router.push('/payment/cart');
     };
 
     return (
@@ -141,7 +151,7 @@ export default function CheckoutPage() {
                                             <p className="text-[16px] font-semibold text-[#333333]">US ${total.toFixed(2)}</p>
                                         </div>
                                         <div className='px-5 mt-5'>
-                                            <button className="h-[50px] w-full rounded-[5px] bg-[#822BE2] hover:bg-purple-200 hover:border-2 hover:border-[#822BE2] hover:text-[#822BE2] hover:cursor-pointer text-white font-bold">
+                                            <button onClick={handleCheckout} className="h-[50px] w-full rounded-[5px] bg-[#822BE2] hover:bg-purple-200 hover:border-2 hover:border-[#822BE2] hover:text-[#822BE2] hover:cursor-pointer text-white font-bold">
                                                 Checkout US ${total.toFixed(2)}
                                             </button>
                                         </div>

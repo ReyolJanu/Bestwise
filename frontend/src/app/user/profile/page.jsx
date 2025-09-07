@@ -47,6 +47,10 @@ export default function ProfilePage() {
   const [selectedContribution, setSelectedContribution] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
+  // Orders summary state
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
   useEffect(() => {
     if (!user) {
       router.push("/login");
@@ -76,6 +80,23 @@ export default function ProfilePage() {
       }
     };
     fetchContributions();
+  }, [user]);
+
+  // Fetch user orders for summary
+  useEffect(() => {
+    if (!user) return;
+    const fetchOrders = async () => {
+      setOrdersLoading(true);
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/orders/history`, { withCredentials: true });
+        setOrders(res.data?.orders || []);
+      } catch (err) {
+        setOrders([]);
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+    fetchOrders();
   }, [user]);
 
   const fetchReminders = async () => {
@@ -413,28 +434,49 @@ export default function ProfilePage() {
                   </span>
                   <h3 className="text-xl font-semibold text-gray-900 tracking-tight">Order Summary</h3>
                 </div>
-                <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="bg-gradient-to-tr from-purple-50 to-blue-50 rounded-xl p-6 flex items-center gap-4 shadow-sm">
-                    <div className="p-3 bg-purple-100 rounded-full">
-                      <FiShoppingBag className="w-7 h-7 text-purple-600" />
+                <div className="p-6">
+                  {ordersLoading ? (
+                    <div className="text-sm text-gray-500">Loading order summary...</div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="rounded-lg border border-gray-100 p-4">
+                          <p className="text-xs text-gray-500">Total Orders</p>
+                          <div className="mt-1 text-2xl font-semibold text-gray-900">{orders.length}</div>
+                        </div>
+                        <div className="rounded-lg border border-gray-100 p-4">
+                          <p className="text-xs text-gray-500">Last Order</p>
+                          <div className="mt-1 text-lg font-medium text-gray-900">{orders[0]?.orderedAt ? new Date(orders[0].orderedAt).toLocaleDateString() : 'N/A'}</div>
+                        </div>
+                        <div className="rounded-lg border border-gray-100 p-4">
+                          <p className="text-xs text-gray-500 mb-1">Status</p>
+                          <div className="text-sm text-gray-800">
+                            {['Pending','Processing','Shipped','Delivered','Cancelled'].map((s, i) => {
+                              const count = orders.filter(o => o.status === s).length;
+                              return (
+                                <span key={s} className="mr-3">
+                                  <span className="font-medium">{s}</span>: {count}
+                                  {i < 4 && <span className="text-gray-300"> | </span>}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => router.push('/user/history')}
+                          className="px-3 py-2 text-sm border border-gray-200 rounded-md text-gray-700 hover:bg-gray-50"
+                        >
+                          View order history
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Total Orders</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-1">{user.orders?.length || 0}</p>
-                    </div>
-                  </div>
-                  <div className="bg-gradient-to-tr from-yellow-50 to-pink-50 rounded-xl p-6 flex items-center gap-4 shadow-sm">
-                    <div className="p-3 bg-pink-100 rounded-full">
-                      <FiUser className="w-7 h-7 text-pink-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Last Order</p>
-                      <p className="text-xl font-semibold text-gray-900 mt-1">{user.orders?.[0]?.date || "N/A"}</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
+              {/* 3. Reminder History */}
               {/* 3. Reminder History */}
               <div className="bg-white rounded-md border" style={{ borderColor: 'rgba(217,217,217,0.5)' }}>
                 <div className="flex items-center gap-3 px-8 py-5 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
